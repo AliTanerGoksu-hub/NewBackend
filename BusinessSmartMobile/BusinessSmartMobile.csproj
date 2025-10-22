@@ -91,12 +91,9 @@
 	<!-- Duplicate Android PropertyGroup sections removed - consolidated above -->
 
 	<ItemGroup>
-		<!-- App Icon - iOS için yüksek kalite -->
+		<!-- App Icon - Basitleştirilmiş yüksek kalite icon -->
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" 
-		          ForegroundFile="Resources\AppIcon\appiconfg.svg" 
-		          Color="#FFFFFF"
-		          BaseSize="512,512"
-		          TintColor="#FFFFFF" />
+		          BaseSize="512,512" />
 
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#ffffff" BaseSize="128,128" />
