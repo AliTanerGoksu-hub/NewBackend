@@ -12,6 +12,7 @@ More information: https://aka.ms/maui-privacy-manifest
 <dict>
     <key>NSPrivacyAccessedAPITypes</key>
     <array>
+        <!-- File Timestamp API - .NET MAUI tarafından kullanılıyor -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
@@ -20,6 +21,8 @@ More information: https://aka.ms/maui-privacy-manifest
                 <string>C617.1</string>
             </array>
         </dict>
+        
+        <!-- System Boot Time API - .NET MAUI tarafından kullanılıyor -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategorySystemBootTime</string>
@@ -28,6 +31,8 @@ More information: https://aka.ms/maui-privacy-manifest
                 <string>35F9.1</string>
             </array>
         </dict>
+        
+        <!-- Disk Space API - .NET MAUI tarafından kullanılıyor -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryDiskSpace</string>
@@ -36,10 +41,29 @@ More information: https://aka.ms/maui-privacy-manifest
                 <string>E174.1</string>
             </array>
         </dict>
-		<dict>
-			<key>NSCameraUsageDescription</key>
-			<string>Bu uygulama barkod okumak için kameraya erişim gerektirir</string>
+        
+        <!-- User Defaults API - Ayarları saklamak için -->
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
         </dict>
+    </array>
+    
+    <!-- Tracking Domains - 3. parti tracking kullanmıyorsanız boş bırakın -->
+    <key>NSPrivacyTrackingDomains</key>
+    <array>
+        <!-- Örnek: Analytics veya reklam servislerini buraya ekleyin -->
+    </array>
+    
+    <!-- Collected Data Types - Topladığınız veri tipleri -->
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array>
+        <!-- Eğer kullanıcı verisi topluyorsanız buraya ekleyin -->
+    </array>
         <!--
             The entry below is only needed when you're using the Preferences API in your app.
         <dict>
