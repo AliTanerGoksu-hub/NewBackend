@@ -10,6 +10,23 @@
 *.userosscache
 *.sln.docstates
 
+# SECURITY - Environment variables and sensitive data
+.env
+.env.local
+.env.production
+.env.development
+*.pfx
+*.p12
+appsettings.Production.json
+appsettings.Local.json
+connectionstrings.json
+
+# Database backups
+*.bak
+*.mdf
+*.ldf
+
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
