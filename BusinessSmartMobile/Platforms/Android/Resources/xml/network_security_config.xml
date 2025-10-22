@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <!-- 
-        PRODUCTION: Sadece HTTPS kullan 
-        Development/Testing için geçici olarak HTTP'ye izin vermek isterseniz,
-        aşağıdaki domain-config bloğunu uncomment edin
+        B2B ENTERPRISE APPLICATION
+        Bu uygulama, müşterilerin kendi backend sunucularına bağlanır.
+        Her müşterinin backend URL'i farklıdır ve uygulama içinden dinamik olarak ayarlanır.
+        Bazı müşteriler HTTP, bazıları HTTPS kullanabilir.
+        Bu nedenle cleartext traffic'e izin verilmiştir.
+        
+        NOT: Kullanıcılar Settings sayfasından kendi backend URL'lerini girerler.
     -->
     
-    <!-- Default: Sadece HTTPS güvenli bağlantılar -->
-    <base-config cleartextTrafficPermitted="false">
+    <!-- 
+        B2B kullanımı için HTTP'ye izin ver 
+        Müşteri backend sunucuları HTTP kullanıyor olabilir
+    -->
+    <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
             <certificates src="user" />
@@ -15,14 +22,11 @@
     </base-config>
     
     <!-- 
-    GEÇICI ÇÖZÜM: Backend API'niz henüz HTTPS kullanmıyorsa
-    aşağıdaki bloğu uncomment edip domain'inizi ekleyin
-    ÖNEMLİ: Production'da mutlaka HTTPS'e geçin!
-    
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">yourapi.example.com</domain>
-        <domain includeSubdomains="true">192.168.1.100</domain>
-        <domain includeSubdomains="true">10.0.2.2</domain>
-    </domain-config>
+        GÜVENLİK NOTU:
+        - Bu uygulama B2B (Business-to-Business) uygulamasıdır
+        - Her müşteri kendi backend sunucusunu kullanır
+        - Backend URL'leri dinamik olarak Settings'ten girilir
+        - HTTPS kullanımı önerilir ancak zorunlu değildir (müşteri tercihine bağlı)
+        - Kullanıcılara HTTPS kullanmaları önerilmelidir
     -->
 </network-security-config>
