@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 
+        PRODUCTION: Sadece HTTPS kullan 
+        Development/Testing için geçici olarak HTTP'ye izin vermek isterseniz,
+        aşağıdaki domain-config bloğunu uncomment edin
+    -->
+    
+    <!-- Default: Sadece HTTPS güvenli bağlantılar -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- 
+    GEÇICI ÇÖZÜM: Backend API'niz henüz HTTPS kullanmıyorsa
+    aşağıdaki bloğu uncomment edip domain'inizi ekleyin
+    ÖNEMLİ: Production'da mutlaka HTTPS'e geçin!
+    
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">yourapi.example.com</domain>
+        <domain includeSubdomains="true">192.168.1.100</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
+    -->
+</network-security-config>
