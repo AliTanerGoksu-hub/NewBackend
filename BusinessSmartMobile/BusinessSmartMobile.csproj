@@ -88,15 +88,7 @@
 	  <MtouchLink>Full</MtouchLink>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
-	  <AndroidKeyStore>True</AndroidKeyStore>
-	  <AndroidSigningStorePass>123456</AndroidSigningStorePass>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
-	  <AndroidKeyStore>True</AndroidKeyStore>
-	  <AndroidSigningStorePass>123456</AndroidSigningStorePass>
-	</PropertyGroup>
+	<!-- Duplicate Android PropertyGroup sections removed - consolidated above -->
 
 	<ItemGroup>
 		<!-- App Icon -->
