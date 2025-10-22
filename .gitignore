@@ -77,4 +77,49 @@ agenthub/agents/youtube/db
 .cache/
 
 # Mobile development
-android-sdk/ 
+android-sdk/
+
+# .NET MAUI / Xamarin
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.pidb
+*.sln.docstates
+.vs/
+
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+local.properties
+.gradle/
+.idea/
+
+# iOS
+*.ipa
+*.dSYM.zip
+*.dSYM
+xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+
+# macOS
+.DS_Store
+
+# SECURITY - NEVER COMMIT THESE
+.env
+.env.local
+.env.production
+*-release.keystore
+*-production.keystore
+*.keystore.password
+*.p12
+*.mobileprovision
+*.certSigningRequest
+
+# Sensitive data
+appsettings.Development.json
+appsettings.Production.json 
