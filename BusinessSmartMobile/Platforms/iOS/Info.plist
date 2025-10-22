@@ -26,8 +26,13 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>XSAppIconAssets</key>
-	<string>Assets.xcassets/appicon.appiconset</string>
+	<!-- App Icon Configuration - .NET MAUI otomatik yönetir -->
+	<!-- XSAppIconAssets kaldırıldı - MAUI kendi icon asset'lerini oluşturur -->
+	
+	<!-- Icon'un daha net görünmesi için prerendered (anti-aliasing kapalı) -->
+	<key>UIPrerenderedIcon</key>
+	<false/>
+	
 	<!-- Permission Açıklamaları - Store için zorunlu -->
 	<key>NSCameraUsageDescription</key>
 	<string>Bu uygulama, ürün barkodlarını okumak için kameranıza erişmek istiyor. Barkod tarama özelliğini kullanabilmek için izin vermeniz gerekmektedir.</string>
