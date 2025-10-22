@@ -1,0 +1,108 @@
+﻿@page "/hesapHareket"
+@inject NavigationManager Navigation
+<MudGrid>
+    <MudItem xs="8">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Hesap Hareketleri</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTable Items="@_entries"
+                          Hover="true"
+                          @bind-SelectedItem="_selectedEntry"
+                          SelectOnRowClick="true">
+                    <HeaderContent>
+                        <MudTh>Tarih</MudTh>
+                        <MudTh>Açıklama</MudTh>
+                        <MudTh Style="text-align:right">Tutar</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Tarih">@context.Date</MudTd>
+                        <MudTd DataLabel="Açıklama">@context.Description</MudTd>
+                        <MudTd DataLabel="Tutar" Style="text-align:right">
+                            @context.Amount.ToString("N2") TL
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="4">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Detaylar</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (_selectedEntry != null)
+                {
+                    <MudForm>
+                        <MudTextField @bind-Value="_selectedEntry.Date"
+                                      Label="Tarih"
+                                      ReadOnly="true" />
+
+                        <MudTextField @bind-Value="_selectedEntry.Amount"
+                                      Label="Tutar"
+                                      Adornment="Adornment.End"
+                                      AdornmentText="TL"
+                                      ReadOnly="true" />
+
+                        <MudTextField @bind-Value="_selectedEntry.Description"
+                                      Label="Açıklama"
+                                      ReadOnly="true" />
+
+                        <MudStack Row="true" Class="mt-4">
+                            <MudButton Color="Color.Primary" Variant="Variant.Outlined">Düzenle</MudButton>
+                            <MudButton Color="Color.Secondary" Variant="Variant.Outlined">Sil</MudButton>
+                        </MudStack>
+                    </MudForm>
+                }
+                else
+                {
+                    <MudText>Bir kayıt seçin</MudText>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<FinancialEntry> _entries;
+    private FinancialEntry _selectedEntry;
+
+    protected override void OnInitialized()
+    {
+        _entries = new List<FinancialEntry>
+{
+            new FinancialEntry
+            {
+                Date = "28/11/2024",
+                Description = "Satış Faturası",
+                Amount = 32000.00m
+            },
+            new FinancialEntry
+            {
+                Date = "24/11/2024",
+                Description = "Satış Faturası",
+                Amount = 28200.00m
+            },
+            new FinancialEntry
+            {
+                Date = "20/11/2024",
+                Description = "Satış Faturası",
+                Amount = 26400.00m
+            }
+        };
+    }
+
+    public class FinancialEntry
+    {
+        public string Date { get; set; }
+        public string Description { get; set; }
+        public decimal Amount { get; set; }
+    }
+}

@@ -1,0 +1,27 @@
+﻿@page "/settings"
+@layout Layout.EmptyLayout
+@inject BusinessSmartMobile.Services.SettingsService ApiSettings
+@inject NavigationManager Navigation
+
+<MudCard>
+    <MudCardContent>
+        <MudText Typo="Typo.h5">API Adresi Ayarla</MudText>
+        <MudTextField @bind-Value="NewApiUrl" Label="API Adresi" />
+        <MudButton OnClick="SaveApiUrl" Color="Color.Primary">Kaydet</MudButton>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private string NewApiUrl;
+
+    protected override void OnInitialized()
+    {
+        NewApiUrl = ApiSettings.GetApiBaseUrl();
+    }
+
+    private void SaveApiUrl()
+    {
+        ApiSettings.SetApiBaseUrl(NewApiUrl);
+        Navigation.NavigateTo("/", true); // Sayfayı yenile
+    }
+}

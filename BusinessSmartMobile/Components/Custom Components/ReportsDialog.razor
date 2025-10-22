@@ -1,0 +1,105 @@
+﻿@inject NavigationManager Navigation
+@inject AuthService AuthService
+
+<MudDialog MaxWidth="MaxWidth.Medium" Class="custom-dialog">
+    <TitleContent>
+        <div class="d-flex align-center">
+            <MudIcon Icon="@Icons.Material.Filled.Assessment" Color="Color.Primary" Size="Size.Large" />
+            <span class="dialog-title">Rapor Seç</span>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        <MudList Dense="true">
+            @foreach (var rapor in RaporListesi)
+            {
+                <MudListItem Button="true" @onclick="@(() => OpenRapor(rapor.Url))">
+                    <MudIcon Icon="@rapor.Icon" Color="Color.Success" />
+                    <MudText Typo="Typo.overline" Class="ml-2">@rapor.Ad</MudText>
+                </MudListItem>
+            }
+        </MudList>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="CloseDialog" Variant="Variant.Filled">
+            <MudIcon Icon="@Icons.Material.Filled.Close" />
+            Kapat
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    private bool _error = false;
+    private string _errorMessage = "";
+    private bool _loading = false;
+    private List<TbYetkiRapor> permissions = new();
+    private List<ReportItem> RaporListesi = new()
+{
+        new ReportItem("Ödenecek Çek", "/payableCheque", Icons.Material.Filled.Payment),
+        new ReportItem("Satış Analizi", "/salesAnalysis", Icons.Material.Filled.BarChart),
+        new ReportItem("Satış Ciroları", "/salesTurnover", Icons.Material.Filled.ShowChart),
+        new ReportItem("Satış Ciroları Satıcılar", "/salesTurnoverVendors", Icons.Material.Filled.People),
+        new ReportItem("Satış Ciroları Sınıflandırmaları", "/salesTurnoverClassifications", Icons.Material.Filled.Category),
+        new ReportItem("Satış Kalan Raporu", "/salesRemaining", Icons.Material.Filled.ListAlt),
+        new ReportItem("Teslimat Rapor", "/deliveryReport", Icons.Material.Filled.DeliveryDining)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            string user= AuthService.Auth?.PERSONELKODU ?? throw new Exception("Personel Kodu Bulunamadı.");
+            var (permissions, _errorMessage) = await AuthService.GetReportPerm(user);
+            RaporListesi = RaporListesi
+     .Where(r => permissions.Any(p => p.RaporAciklama == r.Ad && p.YetkisiVar))
+     .ToList();
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+
+    private void OpenRapor(string url)
+    {
+        Navigation.NavigateTo(url);
+        MudDialog.Close();
+    }
+
+    private void CloseDialog()
+    {
+        MudDialog.Close();
+    }
+
+    private record ReportItem(string Ad, string Url, string Icon);
+}
+
+<style>
+    .custom-dialog {
+        border-radius: 12px;
+        width: 500px; /* Genişlik artırıldı */
+        max-width: 90%; /* Responsive olması için max genişlik */
+    }
+
+    .dialog-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        margin-left: 10px;
+    }
+
+    .mud-list-item {
+        display: flex;
+        align-items: center;
+        transition: background 0.3s;
+        padding: 10px; /* Satırlar biraz daha geniş */
+    }
+
+        .mud-list-item:hover {
+            background: rgba(0, 150, 136, 0.1);
+        }
+</style>

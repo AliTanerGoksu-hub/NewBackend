@@ -1,0 +1,129 @@
+﻿@inject MudBlazor.IDialogService DialogService
+@inject StockService StockService
+@inject ReportsService ReportsService
+<MudDialog>
+    <DialogContent>
+        @if (FilterOptions.ShowType)
+        {
+            <MudSelect T="string" Label="Stok Mevcudu" @bind-Value="Filter.Type">
+
+                @foreach (var v in typeList)
+                {
+                    <MudSelectItem Value="@v.Key">@v.Value</MudSelectItem>
+                }
+
+            </MudSelect>
+        }
+        <MudDatePicker Label="Başlangıç Tarihi" @bind-Date="Filter.StartDate" DateFormat="dd.MM.yyyy" />
+        <MudDatePicker Label="Bitiş Tarihi" @bind-Date="Filter.EndDate" DateFormat="dd.MM.yyyy" />
+
+        @if (FilterOptions.ShowVendor)
+        {
+            <MudSelect T="string" Label="Satıcı" @bind-Value="Filter.Vendor">
+                @foreach (var v in Vendors)
+                {
+                    <MudSelectItem Value="@v.sSaticiRumuzu">@v.sAdi @v.sSoyadi</MudSelectItem>
+                }
+            </MudSelect>
+        }
+
+        @if (FilterOptions.ShowWarehouse)
+        {
+            <MudSelect T="string" Label="Depo" @bind-Value="Filter.Warehouse">
+                @foreach (var w in Warehouses)
+                {
+                    <MudSelectItem Value="@w.sDepo">@w.sAciklama</MudSelectItem>
+                }
+            </MudSelect>
+        }
+
+        @if (FilterOptions.ShowStore)
+        {
+            <MudSelect T="string" Label="Mağaza" @bind-Value="Filter.Store">
+                @foreach (var s in Stores)
+                {
+                    <MudSelectItem Value="@s.sDepo">@s.sAciklama</MudSelectItem>
+                }
+            </MudSelect>
+        }
+
+        @if (FilterOptions.ShowClass)
+        {
+            <MudSelect T="string" Label="Sınıf" @bind-Value="Filter.Class">
+                @foreach (var c in Class)
+                {
+                    <MudSelectItem Value="@c.Id">@c.Name</MudSelectItem>
+                }
+            </MudSelect>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Apply">Uygula</MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">İptal</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public ReportFilterOptions FilterOptions { get; set; }
+    [Parameter] public ReportFilters Filter { get; set; } = new();
+
+    string _errorMessage;
+    private List<TbSatici> Vendors = new();
+    private List<TbDepo> Warehouses = new();
+    private List<TbDepo> Stores = new();
+    private List<(string Id, string Name)> Class = new();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Burada senin DB servisinden çekilecek
+        if (FilterOptions.ShowVendor)
+        {
+            (Vendors, _errorMessage) = await ReportsService.GetVendors();
+        }
+        if (FilterOptions.ShowWarehouse)
+        {
+            (Warehouses, _errorMessage) = await StockService.GetWarehouse();
+        }
+        if (FilterOptions.ShowStore)
+        {
+            (Stores, _errorMessage) = await StockService.GetWarehouse();
+        }
+        if (FilterOptions.ShowClass)
+        {
+            Class = await GetClass();
+        }
+    }
+
+    void Apply() => MudDialog.Close(DialogResult.Ok(Filter));
+    void Cancel() => MudDialog.Cancel();
+    private Dictionary<string, string> typeList = new Dictionary<string, string>
+        {
+        { "1","Tümü" },
+        { "2","Stok'ta Olmayanlar" },
+        { "3","Stok'ta Olanlar" }
+        };
+    public static Task<List<(string Id, string Name)>> GetClass()
+       => Task.FromResult(new List<(string, string)>
+       {
+            ("1", "Sınıf 1"),
+            ("2", "Sınıf 2"),
+            ("3", "Sınıf 3"),
+            ("4", "Sınıf 4"),
+            ("5", "Sınıf 5"),
+            ("6", "Sınıf 6"),
+            ("7", "Sınıf 7"),
+            ("8", "Sınıf 8"),
+            ("9", "Sınıf 9"),
+            ("10", "Sınıf 10"),
+            ("11", "Sınıf 11"),
+            ("12", "Sınıf 12"),
+            ("13", "Sınıf 13"),
+            ("14", "Sınıf 14"),
+            ("15", "Sınıf 15")
+       });
+}

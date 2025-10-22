@@ -1,0 +1,111 @@
+﻿@using MudBlazor
+@inject OrderService OrderService
+@inject IDialogService DialogService
+@inject AuthService _authService
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="6">
+                <MudNumericField T="double"
+                                 @bind-Value="siparis.nIskontoYuzdesi"
+                                 Label="İskonto (%)"
+                                 Immediate="true"
+                                 Min="0"
+                                 Max="100" />
+            </MudItem>
+        </MudGrid>
+
+        @if (_error)
+        {
+            <MudAlert Severity="Severity.Error" Class="my-4">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="UpdateSelectedOrder">Güncelle</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Cancel">İptal</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _error = false;
+    private string _errorMessage = string.Empty;
+
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public TbSiparis siparis { get; set; } = new TbSiparis();
+
+    [Parameter]
+    public string sSaticiRumuzu { get; set; } = string.Empty;
+
+    [Parameter]
+    public string sDepo { get; set; } = string.Empty;
+
+    private async Task UpdateSelectedOrder()
+    {
+        if (_authService.Auth == null)
+        {
+            _error = true;
+            _errorMessage = "Kullanıcı giriş yapmamış.";
+            StateHasChanged();
+            return;
+        }
+
+        if (siparis.lMiktari <= 0)
+        {
+            _error = true;
+            _errorMessage = "Miktar giriniz.";
+            StateHasChanged();
+            return;
+        }
+
+        if (siparis.nIskontoYuzdesi < 0) siparis.nIskontoYuzdesi = 0;
+        if (siparis.nIskontoYuzdesi > 100) siparis.nIskontoYuzdesi = 100;
+
+        if (sSaticiRumuzu != _authService.Auth.sSaticiRumuzu)
+        {
+            _error = true;
+            _errorMessage = "Geçersiz satıcı rumuzu.";
+            StateHasChanged();
+            return;
+        }
+
+        var sonuc = await OrderService.UpdateDiscount(
+            siparis.nSiparisID,
+            siparis.lMiktari,
+            siparis.nIskontoYuzdesi
+        );
+
+        if (sonuc != "OK")
+        {
+            _error = true;
+            _errorMessage = sonuc ?? "Güncelleme başarısız.";
+            StateHasChanged();
+            return;
+        }
+
+        TbSiparis toReturn = siparis;
+        try
+        {
+            var refreshed = await OrderService.GetById(siparis.nSiparisID);
+            if (refreshed != null)
+            {
+                toReturn = refreshed;
+            }
+        }
+        catch
+        {
+            // endpoint yoksa mevcut modeli döndürmek yeterli
+        }
+
+        MudDialog.Close(DialogResult.Ok(toReturn));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

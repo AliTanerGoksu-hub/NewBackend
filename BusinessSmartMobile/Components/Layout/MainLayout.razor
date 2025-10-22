@@ -1,0 +1,32 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+
+
+<MudBlazor.MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider MaxDisplayedSnackbars="3" Position="SnackbarPosition.TopRight" PreventDuplicates="true" />
+
+
+<MudLayout Style="height:100vh;">
+    <MudAppBar Elevation="0" Style="height:6%; min-height:40px;">
+        <MudIconButton Icon="@Icons.Material.Filled.Home" Color="Color.Inherit" Edge="Edge.Start"
+                       @onclick="@(() => Navigation.NavigateTo("/home"))" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Custom.Brands.Chrome" Color="Color.Inherit"
+                       Link="https://www.barkodyazilim.com.tr/" Target="_blank" />
+    </MudAppBar>
+
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}

@@ -1,0 +1,72 @@
+@using BusinessSmartMobile.Models
+@using MudBlazor
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public List<UrunSecimi> GeciciListe { get; set; }
+    private bool _error = false;
+    private string _errorMessage = "";
+
+    protected override void OnParametersSet()
+    {
+        if (GeciciListe == null)
+        {
+            _error = true;
+            _errorMessage = "Ürün listesi yüklenemedi.";
+            StateHasChanged();
+        }
+    }
+
+    private void Onayla()
+    {
+        if (GeciciListe == null || !GeciciListe.Any())
+        {
+            _error = true;
+            _errorMessage = "Onaylanacak ürün bulunmamaktadýr.";
+            StateHasChanged();
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(GeciciListe));
+    }
+
+    private void Iptal()
+    {
+        MudDialog.Cancel();
+    }
+}
+
+<MudDialog>
+    <MudDialogTitle>Barkodla Eklenen Ürünler</MudDialogTitle>
+
+    <MudDialogContent>
+        @if (_error)
+        {
+            <MudAlert Severity="Severity.Error" Class="my-4">@_errorMessage</MudAlert>
+        }
+        else if (GeciciListe == null || !GeciciListe.Any())
+        {
+            <MudText Align="Align.Center" Class="my-4">Ürün listesi boþ veya yüklenemedi.</MudText>
+        }
+        else
+        {
+            <MudTable Items="GeciciListe" Dense="true">
+                <HeaderContent>
+                    <MudTh>Ürün</MudTh>
+                    <MudTh>Miktar</MudTh>
+                    <MudTh>Birim</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Urun.sAciklama</MudTd>
+                    <MudTd>@context.Miktar</MudTd>
+                    <MudTd>@context.SelectedBirimCinsi</MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudDialogContent>
+
+    <MudDialogActions>
+        <MudButton OnClick="Onayla" Color="Color.Primary" Disabled="@_error">Onayla</MudButton>
+        <MudButton OnClick="Iptal" Color="Color.Default">Ýptal</MudButton>
+    </MudDialogActions>
+</MudDialog>

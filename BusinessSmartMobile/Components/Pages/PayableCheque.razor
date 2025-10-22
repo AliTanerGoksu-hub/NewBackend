@@ -1,0 +1,325 @@
+﻿@page "/payableCheque"
+@inject ReportsService ReportsService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+@using System.Globalization;
+
+@*<MudContainer Class="mx-0 mt-4">*@
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+}
+
+@if (_error)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">@_errorMessage</MudAlert>
+}
+
+<MudTable Class="mx-2"
+          Breakpoint="Breakpoint.None"
+          Items="list" Dense="true"
+          Hover="true"
+          MultiSelection="true"
+          @bind-SelectedItems="SelectedItems"
+          SortLabel="Sort By"
+          RowsPerPage="25"
+          Striped="true"
+          Bordered="true"
+          FixedHeader="true"
+          FixedFooter="true"
+          Style="height:90vh;overflow-y:auto">
+    <ToolBarContent>
+        <div style="flex: 1;">
+            <MudText Typo="Typo.h6">Ödenecek Çek</MudText>
+        </div>
+
+        <div>
+            <MudIconButton Icon="@Icons.Material.Filled.FilterAlt" @onclick="@(() => OpenFilterDialog())" aria-label="Filtre"></MudIconButton>
+        </div>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbPayableCheque, object>(x=>x.sVerenFirmaAciklama)">Firma</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbPayableCheque, object>(x=>x.lCekSenetNo)">Evrak No</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbPayableCheque, object>(x=>x.lKalan)">Kalan</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbPayableCheque, object>(x=>x.dteVadeTarihi)">Vade</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbPayableCheque, object>(x=>x.sAlanFirmaAciklama)">Alan Hesap</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbPayableCheque, object>(x=>x.sBankaAciklama)">Banka</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbPayableCheque, object>(x=>x.lDovizMiktari1)">Döviz Tutar</MudTableSortLabel></MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+
+        <MudTd DataLabel="Firma">@context.sVerenFirmaAciklama</MudTd>
+        <MudTd DataLabel="Evrak No">@context.lCekSenetNo</MudTd>
+        <MudTd DataLabel="Kalan" Style="text-align:right">@context.lKalan</MudTd>
+        <MudTd DataLabel="Vade">
+            @if (!string.IsNullOrEmpty(@context.dteVadeTarihi?.ToString()))
+            {
+                @context.dteVadeTarihi.ToString().Substring(0, 10);
+            }
+        </MudTd>
+        <MudTd DataLabel="Alan Hesap">@context.sAlanFirmaAciklama</MudTd>
+        <MudTd DataLabel="Banka">@context.sBankaAciklama</MudTd>
+        <MudTd DataLabel="Döviz Tutar" Style="text-align:right">@context.lDovizMiktari1</MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="Gösterilecek Satır" />
+    </PagerContent>
+</MudTable>
+@if (SecilenEvrak > 0)
+{
+    <MudPaper Class="p-4 mx-2"
+              Outlined="true"
+              Elevation="8"
+              Style="position: sticky; bottom: 0; z-index: 1000; background: var(--mud-palette-surface); border-top: 2px solid var(--mud-palette-primary);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: center;">
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <MudIcon Icon="@Icons.Material.Filled.Description"
+                         Color="Color.Primary"
+                         Size="Size.Small" />
+                <div>
+                    <MudText Typo="Typo.caption"
+                             Style="color: var(--mud-palette-text-secondary); margin: 0;">
+                        Seçilen Evrak
+                    </MudText>
+                    <MudText Typo="Typo.body1"
+                             Style="font-weight: 600; margin: 0;">
+                        @SecilenEvrak
+                    </MudText>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <MudIcon Icon="@Icons.Material.Filled.CurrencyLira"
+                         Color="Color.Success"
+                         Size="Size.Small" />
+                <div>
+                    <MudText Typo="Typo.caption"
+                             Style="color: var(--mud-palette-text-secondary); margin: 0;">
+                        Seçilen Tutar
+                    </MudText>
+                    <MudText Typo="Typo.body1"
+                             Style="font-weight: 600; margin: 0; color: var(--mud-palette-success);">
+                        @SecilenTutar.ToString("N2")
+                    </MudText>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <MudIcon Icon="@Icons.Material.Filled.Schedule"
+                         Color="Color.Info"
+                         Size="Size.Small" />
+                <div>
+                    <MudText Typo="Typo.caption"
+                             Style="color: var(--mud-palette-text-secondary); margin: 0;">
+                        Ortalama Gün
+                    </MudText>
+                    <MudText Typo="Typo.body1"
+                             Style="font-weight: 600; margin: 0; color: var(--mud-palette-info);">
+                        @OrtalamaGun
+                    </MudText>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <MudIcon Icon="@Icons.Material.Filled.CalendarToday"
+                         Color="Color.Secondary"
+                         Size="Size.Small" />
+                <div>
+                    <MudText Typo="Typo.caption"
+                             Style="color: var(--mud-palette-text-secondary); margin: 0;">
+                        Ortalama Vade
+                    </MudText>
+                    <MudChip Text="@OrtalamaVade.ToString("dd/MM/yyyy")"
+                             Color="Color.Secondary"
+                             Size="Size.Small"
+                             Icon="@Icons.Material.Filled.Event"
+                             Style="margin: 0; height: 24px;" />
+                </div>
+            </div>
+
+        </div>
+    </MudPaper>
+}
+
+@code {
+    //private IEnumerable<TbFirma> Elements = Enumerable.Empty<TbFirma>();
+    private List<TbPayableCheque> list = new List<TbPayableCheque>();
+    private string apiMessage = string.Empty;
+    private TbPayableCheque filteredCheque = new TbPayableCheque();
+    private bool _loading = true;
+    private bool _error = false;
+    private string _errorMessage = "";
+    static DateTime now = DateTime.Now;
+    static DateTime firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
+    static DateTime lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+    string startDateStr = firstDayOfMonth.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+    string endDateStr = lastDayOfMonth.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+    private HashSet<TbPayableCheque> _selectedItems = new();
+    private int OrtalamaGun { get; set; }
+    private DateTime OrtalamaVade { get; set; }
+    private double SecilenTutar { get; set; }
+    private int SecilenEvrak { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        LoadList(startDateStr, endDateStr);
+    }
+
+
+
+
+
+    private async Task OpenFilterDialog()
+    {
+        try
+        {
+            DateTime startDate = DateTime.ParseExact(startDateStr, "dd.MM.yyyy", CultureInfo.InvariantCulture);
+            DateTime endDate = DateTime.ParseExact(endDateStr, "dd.MM.yyyy", CultureInfo.InvariantCulture);
+            var parameters = new DialogParameters
+            {
+                ["FilterOptions"] = new ReportFilterOptions
+                {
+                    ShowVendor = false,
+                    ShowStore = false,
+                    ShowClass = false,
+                    ShowWarehouse = false,
+                    ShowType = false
+                },
+                ["Filter"] = new ReportFilters
+                {
+                    StartDate = startDate,
+                    EndDate = endDate
+                }
+
+            };
+
+            var dialog = DialogService.Show<BusinessSmartMobile.Components.Custom_Components.ReportFilter>("Filtrele", parameters);
+            var result = await dialog.Result;
+
+            if (!result.Cancelled)
+            {
+                var filter = (ReportFilters)result.Data;
+                DateTime resStartDate = filter.StartDate.Value;
+                startDateStr = resStartDate.ToString("dd.MM.yyyy");
+                DateTime resEndDate = filter.EndDate.Value;
+                endDateStr = resEndDate.ToString("dd.MM.yyyy");
+                LoadList(startDateStr, endDateStr);
+
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _errorMessage = $"Hata oluştu: {ex.Message}";
+            StateHasChanged();
+        }
+
+
+
+
+
+
+        //var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        //var parameters = new DialogParameters { { "cheque", filteredCheque } };
+        //var dialog = await DialogService.ShowAsync<BusinessSmartMobile.Components.Custom_Components.ReportFilterDialog>("Filtrele", parameters, options);
+        //var result = await dialog.Result;
+
+        //if (!result.Canceled)
+        //{
+        //    filteredCheque = (TbPayableCheque)result.Data;
+        //    LoadList( filteredCheque);
+        //}
+    }
+
+
+
+    private async void LoadList(string startDate, string endDate)
+    {
+
+
+        try
+        {
+            (list, apiMessage) = await ReportsService.GetPayableCheque(startDate, endDate);
+            _loading = true;
+            _error = false;
+
+            if (!string.IsNullOrEmpty(apiMessage))
+            {
+                _error = true;
+                _errorMessage = apiMessage;
+            }
+            else if (!list.Any())
+            {
+                _error = true;
+                _errorMessage = "Girilen Filtreye Ait Veri Bulunamadı.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _errorMessage = $"Hata oluştu: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+    private HashSet<TbPayableCheque> SelectedItems
+    {
+        get => _selectedItems;
+        set
+        {
+            _selectedItems = value;
+            Hesapla();
+        }
+    }
+    private void Hesapla()
+    {
+        if (_selectedItems == null || !_selectedItems.Any())
+        {
+            SecilenEvrak = 0;
+            SecilenTutar = 0;
+            OrtalamaGun = 0;
+            OrtalamaVade = DateTime.Now;
+            return;
+        }
+
+        SecilenEvrak = _selectedItems.Count;
+        SecilenTutar = _selectedItems.Sum(x => x.lKalan);
+        DateTime bazTarih = DateTime.Now;
+        double toplamGun = 0;
+        double toplamTutar = 0;
+
+        foreach (var item in _selectedItems)
+        {
+            if (!string.IsNullOrWhiteSpace(item.dteVadeTarihi))
+            {
+                Console.WriteLine($"DteVadeTarihi raw: {item.dteVadeTarihi}");
+                if (DateTime.TryParse(item.dteVadeTarihi.Trim(), out DateTime vade))
+                {
+                    double gun = (vade - bazTarih).TotalDays;
+                    toplamGun += gun * (double)item.lKalan;
+                    toplamTutar += (double)item.lKalan;
+                }
+                else
+                {
+                    Console.WriteLine($"Parse edilemedi: '{item.dteVadeTarihi}'");
+                }
+            }
+        }
+
+        if (toplamTutar > 0)
+        {
+            OrtalamaGun = (int)Math.Round(toplamGun / toplamTutar);
+            OrtalamaVade = bazTarih.AddDays(OrtalamaGun);
+        }
+        else
+        {
+            OrtalamaGun = 0;
+            OrtalamaVade = DateTime.Now;
+        }
+    }
+}

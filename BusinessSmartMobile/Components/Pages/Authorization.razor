@@ -1,0 +1,144 @@
+﻿@page "/authorization"
+@inject AuthService AuthService
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+}
+@if (_error)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">@_errorMessage</MudAlert>
+}
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h6" Class="mb-4">Kullanıcı Rapor Yetkileri</MudText>
+
+    <!-- Kullanıcı Seçimi -->
+    <MudSelect T="string" Label="Kullanıcı Seçin" Dense="true" Variant="Variant.Outlined"
+               Value="@personelkod" ValueChanged="OnUserChanged">
+        @foreach (var user in MobileUsers)
+        {
+            <MudSelectItem Value="@user.PERSONELKODU">@user.PERSONELADI</MudSelectItem>
+        }
+    </MudSelect>
+
+    <!-- Rapor Kartları -->
+    @if (MobileUsers != null && Permissions != null && !string.IsNullOrEmpty(personelkod))
+    {
+        <MudGrid Class="mt-4" GutterSize="GutterSize.Small">
+            @foreach (var report in Permissions)
+            {
+                var permission = Permissions.FirstOrDefault(p => p.PERSONELKODU == personelkod && p.RaporID == report.RaporID);
+                bool hasPermission = permission?.YetkisiVar ?? false;
+
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudCard Class="report-card"
+                             Style="@($"cursor:pointer; transition: transform 0.3s, box-shadow 0.3s, filter 0.3s; height:100px; border-radius:12px; background: {(hasPermission ? "linear-gradient(135deg, #81C784, #4CAF50)" : "#F5F5F5")}; position:relative;")"
+                             @onclick="@(() => TogglePermissionAsync(report.ID))">
+                        <MudCardContent Class="d-flex flex-column align-items-center justify-content-center"
+                                        Style="height:100%; padding:12px;">
+                            <MudIcon Icon="@Icons.Material.Filled.Assessment"
+                                     Size="Size.Medium"
+                                     Style="@($"color:{(hasPermission ? "white" : "#BDBDBD")}; transition: color 0.3s;")" />
+                            <MudText Class="mt-1" Align="Align.Center"
+                                     Style="@($"color:{(hasPermission ? "white" : "#757575")}; font-weight:500; font-size:0.9rem;")">
+                                @report.RaporAciklama
+                            </MudText>
+                            <!-- Yetki simgesi -->
+                            <MudIcon Icon="@((hasPermission ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel))"
+                                     Size="Size.Small"
+                                     Style="@($"position:absolute; top:8px; right:8px; color:{(hasPermission ? "#FFFFFF" : "#9E9E9E")};")" />
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudPaper>
+
+<style>
+    .report-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        filter: brightness(1.05);
+    }
+</style>
+
+@code {
+    private bool _error = false;
+    private string _errorMessage = "";
+    private bool _loading = false;
+
+    private string personelkod;
+    private List<TbYetkiRapor> Permissions = new();
+    private List<Auth> MobileUsers = new();
+    //private List<TbRaporlar> Reports = new();
+
+    protected override async void OnInitialized()
+    {
+        (MobileUsers, _errorMessage) = await AuthService.GetMobileUsers();
+        if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            _error = true;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task OnUserChanged(string code)
+    {
+        personelkod = code;
+        _loading = true;
+        _error = false;
+
+        try
+        {
+            var (permissions, message) = await AuthService.GetReportPerm(code);
+            if (!string.IsNullOrEmpty(message))
+            {
+                _error = true;
+                _errorMessage = message;
+            }
+            else
+            {
+                Permissions = permissions;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _errorMessage = $"Hata oluştu: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task TogglePermissionAsync(int permissionID)
+    {
+        if (string.IsNullOrEmpty(personelkod)) return;
+
+        var permission = Permissions.FirstOrDefault(p =>p.ID== permissionID);
+        if (permission != null)
+        {
+            permission.YetkisiVar = !permission.YetkisiVar;
+            await AuthService.UpdatePerm(permissionID, permission.YetkisiVar);
+        }
+        else
+        {
+            Permissions.Add(new TbYetkiRapor
+            {
+                PERSONELKODU = personelkod,
+                ID = permissionID,
+                YetkisiVar = true
+            });
+        }
+
+        // TODO: Burayı gerçek API çağrısı ile değiştir
+        await Task.Delay(100);
+
+        StateHasChanged();
+    }
+}

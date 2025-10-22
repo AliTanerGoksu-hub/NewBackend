@@ -1,0 +1,280 @@
+﻿@inject IDialogService DialogService
+@inject AuthService _authService
+@inject OrderService OrderService
+@inject StockService StockService
+@inject ISnackbar Snackbar
+@using MudBlazor
+@inject ISnackbar MudSnack
+@if (_error)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">@_errorMessage</MudAlert>
+}
+@if (_success)
+{
+    <MudAlert Severity="Severity.Success" Class="my-4">@_successMessage</MudAlert>
+}
+<MudDialog>
+    <DialogContent>
+        <MudTable Breakpoint="Breakpoint.None"
+                  Items="orderDetail" Dense="true"
+                  Hover="true"
+                  SortLabel="Sort By"
+                  RowsPerPage="10"
+                  Striped="true"
+                  Bordered="true"
+                  FixedHeader="true"
+                  FixedFooter="true"
+                  Style="overflow-y:auto">
+            <HeaderContent>
+                <MudTh>İşlem</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<TbSiparis, object>(x=>x.dteSiparisTarihi)">Sipariş Tarihi</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<TbSiparis, object>(x=>x.sKodu)">Stok Kodu</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<TbSiparis, object>(x=>x.sSiparisiVeren)">Stok Adı</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<TbSiparis, object>(x=>x.lMiktari)">Miktar</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<TbSiparis, object>(x=>x.sBirimCinsi)">Birim Cinsi</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<TbSiparis, object>(x=>x.lTutari)">Tutar</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<TbSiparis, object>(x=>x.lIskontoTutari)">İskonto Tutarı</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<TbSiparis, object>(x=>x.nIskontoYuzdesi)">İskonto Yüzdesi</MudTableSortLabel></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Percent"
+                                   Color="Color.Warning"
+                                   @onclick="() => EditDiscount(context)"
+                                   aria-label="İskonto">
+                    </MudIconButton>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Primary"
+                                   @onclick="() => EditOrder(context)"
+                                   aria-label="Düzenle">
+                    </MudIconButton>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   @onclick="() => OpenDeleteDialog(context,false)"
+                                   aria-label="SİL">
+                    </MudIconButton>
+                </MudTd>
+                <MudTd DataLabel="Sipariş Tarihi">@context.dteSiparisTarihi</MudTd>
+                <MudTd DataLabel="Stok Kodu">@context.sKodu</MudTd>
+                <MudTd DataLabel="Stok Adı">@context.sSiparisiVeren</MudTd>
+                <MudTd DataLabel="Miktar">@context.lMiktari</MudTd>
+                <MudTd DataLabel="Birim Cinsi">@context.sBirimCinsi</MudTd>
+                <MudTd DataLabel="Tutar">@context.lTutari</MudTd>
+                <MudTd DataLabel="İskonto Tutarı">@context.lIskontoTutari</MudTd>
+                <MudTd DataLabel="İskonto Yüzdesi">@context.nIskontoYuzdesi</MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="Gösterilecek Satır" />
+            </PagerContent>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" @onclick="() => OpenDeleteDialog(default,true)">Tümünü Sil</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Print">Yazdır</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Cancel">Çıkış</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<TbSiparis> orderDetail { get; set; }
+    [Parameter]
+    public string lSiparisNo { get; set; }
+    private string? _errorMessage = "";
+    private bool _error = false;
+    private bool _success = false;
+    private string _successMessage = "";
+    private async Task EditOrder(TbSiparis siparis)
+    {
+        if (_authService.Auth == null)
+        {
+            MudDialog.Close(DialogResult.Ok(new { Error = "Kullanıcı giriş yapmamış." }));
+            return;
+        }
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var parameters = new DialogParameters
+{
+            { "siparis", siparis },
+            { "sSaticiRumuzu", _authService.Auth.sSaticiRumuzu },
+            { "sDepo", _authService.Auth.sDepo }
+        };
+
+        var dialog = await DialogService.ShowAsync<BusinessSmartMobile.Components.Custom_Components.EditOrder>("Miktar Güncelle", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            (orderDetail, string message) = await OrderService.GetOrderDetails(lSiparisNo, _authService.Auth.sSaticiRumuzu);
+            if (!string.IsNullOrEmpty(message))
+            {
+                _error = true;
+                _errorMessage = message;
+                StateHasChanged();
+                return;
+            }
+        }
+    }
+    private MudTable<TbSiparis> _table;
+    private int _tableVersion = 0;
+
+    private async Task EditDiscount(TbSiparis siparis)
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var parameters = new DialogParameters
+{
+            { "siparis", siparis },
+            { "sSaticiRumuzu", _authService.Auth?.sSaticiRumuzu ?? string.Empty },
+            { "sDepo", _authService.Auth?.sDepo ?? string.Empty }
+        };
+
+        var dialogRef = await DialogService.ShowAsync<BusinessSmartMobile.Components.Custom_Components.EditDiscount>(
+            "İskonto Düzenle", parameters, options);
+
+        var result = await dialogRef.Result;
+        if (!result.Canceled)
+        {
+            (orderDetail, string message) = await OrderService.GetOrderDetails(lSiparisNo, _authService.Auth.sSaticiRumuzu);
+            if (!string.IsNullOrEmpty(message))
+            {
+                _error = true;
+                _errorMessage = message;
+                StateHasChanged();
+                return;
+            }
+        }
+
+
+
+        //if (result.Cancelled) return;
+
+        //if (result.Data is TbSiparis updated)
+        //{
+        //    // 1) listedeki öğeyi bul/değiştir
+        //    var ix = orderDetail.FindIndex(x => x.nSiparisID == updated.nSiparisID);
+        //    if (ix >= 0) orderDetail[ix] = updated;
+        //    else orderDetail.Add(updated);
+
+        //    // 2) yeni referans ver → render garantisi
+        //    orderDetail = orderDetail.ToList();
+
+        //    // 3) tabloyu zorla yeniden çiz (Items kullanıyorsan)
+        //    _tableVersion++;
+
+        //    // 4) UI yenile
+        //    await InvokeAsync(StateHasChanged);
+        //}
+        //else
+        //{
+        //    MudSnack.Add("Güncelleme sonucu işlenemedi.", Severity.Warning);
+        //}
+    }
+
+
+    private async void Print()
+    {
+        List<UrunSecimi> SecilenUrunler = new();
+        List<Stock> Urun = new List<Stock>();
+        List<TbStokBirimCinsi> unitList = new List<TbStokBirimCinsi>();
+        string apiMessage = "";
+        var sDepo = _authService.Auth?.sDepo;
+        string sFiyatTipi = _authService.Auth?.sAktifFiyatTipi ?? "1";
+
+        foreach (var item in orderDetail)
+        {
+            Urun = await OrderService.GetStock(1, 1, item.sKodu);
+            Urun.FirstOrDefault().nIskontoYuzdesi = item.nIskontoYuzdesi;
+            (unitList, apiMessage) = await StockService.GetUnits(
+        Urun.FirstOrDefault().nStokID.ToString(),
+        _authService.Auth.sDepo,
+        _authService.Auth.sAktifFiyatTipi);
+            SecilenUrunler.Add(new UrunSecimi
+            {
+                Urun = Urun.FirstOrDefault(),
+                Miktar = item.lMiktari,
+                UnitList = unitList,
+                SelectedBirimCinsi = unitList.FirstOrDefault()?.sBirimCinsi
+            });
+        }
+        int nSiparisId = orderDetail.FirstOrDefault().nSiparisID;
+
+        await OrderService.RePrintPDF(SecilenUrunler, nSiparisId);
+    }
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+    private async void OpenDeleteDialog(TbSiparis siparis, bool isDeleteAll)
+    {
+        string content = isDeleteAll ? "Sipariş" : "Satır";
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var parameters = new DialogParameters { { "ContentText", $"{content} Silinecek Emin Misinz?" } };
+        var dialog = await DialogService.ShowAsync<BusinessSmartMobile.Components.Custom_Components.DeleteDialog>($"{content} Sil", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            if (isDeleteAll)
+            {
+                await DeleteAll(lSiparisNo);
+            }
+            else
+            {
+                await DeleteSelectedRow(siparis.nSiparisID, siparis.lSiparisNo);
+            }
+        }
+
+    }
+    private async Task DeleteAll(string lSiparisNo)
+    {
+        var sonuc = await OrderService.DeleteOrder(lSiparisNo);
+        if (sonuc == "OK")
+        {
+            Snackbar.Add("Sipariş Silindi.", Severity.Success);
+
+            Cancel();
+
+        }
+        else
+        {
+
+            _error = true;
+            _errorMessage = sonuc;
+            StateHasChanged();
+        }
+    }
+    private async Task DeleteSelectedRow(int nSiparisID, string lSiparisNo)
+    {
+        var sonuc = await OrderService.DeleteOrderRow(nSiparisID);
+        if (sonuc == "OK")
+        {
+            _error = false;
+            (orderDetail, string message) = await OrderService.GetOrderDetails(lSiparisNo, _authService.Auth.sSaticiRumuzu);
+            if (!string.IsNullOrEmpty(message))
+            {
+                _error = true;
+                _errorMessage = message;
+                StateHasChanged();
+                return;
+            }
+            else
+            {
+                if (orderDetail.Count == 0)
+                {
+                    MudDialog.Cancel();
+                }
+                StateHasChanged();
+            }
+        }
+        else
+        {
+
+            _error = true;
+            _errorMessage = sonuc;
+            StateHasChanged();
+        }
+    }
+}
