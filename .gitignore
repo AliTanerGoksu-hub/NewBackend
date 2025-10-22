@@ -154,3 +154,7 @@ appsettings.Production.json -e
 # Environment files
 *.env
 *.env.*
+-e 
+# Environment files
+*.env
+*.env.*
