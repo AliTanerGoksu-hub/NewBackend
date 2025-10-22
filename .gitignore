@@ -122,4 +122,7 @@ DerivedData/
 
 # Sensitive data
 appsettings.Development.json
-appsettings.Production.json 
+appsettings.Production.json -e 
+# Environment files
+*.env
+*.env.*
