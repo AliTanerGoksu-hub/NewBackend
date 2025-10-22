@@ -54,19 +54,25 @@
 		<Debugger>Xamarin</Debugger>
 		<EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 		<AndroidKeyStore>True</AndroidKeyStore>
-		<AndroidSigningStorePass>123456</AndroidSigningStorePass>
-		<AndroidSigningKeyPass>123456</AndroidSigningKeyPass>
+		<!-- GÜVENLİK: Şifreler environment variable'dan okunmalı -->
+		<!-- Local development için: export ANDROID_KEYSTORE_PASS=your_password -->
+		<AndroidSigningStorePass Condition="'$(ANDROID_KEYSTORE_PASS)' != ''">$(ANDROID_KEYSTORE_PASS)</AndroidSigningStorePass>
+		<AndroidSigningStorePass Condition="'$(ANDROID_KEYSTORE_PASS)' == ''">123456</AndroidSigningStorePass>
+		<AndroidSigningKeyPass Condition="'$(ANDROID_KEY_PASS)' != ''">$(ANDROID_KEY_PASS)</AndroidSigningKeyPass>
+		<AndroidSigningKeyPass Condition="'$(ANDROID_KEY_PASS)' == ''">123456</AndroidSigningKeyPass>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
 		<Debugger>Xamarin</Debugger>
-		<AndroidPackageFormat>apk</AndroidPackageFormat>
+		<AndroidPackageFormat>aab</AndroidPackageFormat>
 		<AndroidUseAapt2>True</AndroidUseAapt2>
 		<AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
 		<RunAOTCompilation>False</RunAOTCompilation>
 		<AndroidKeyStore>True</AndroidKeyStore>
-		<AndroidSigningStorePass>123456</AndroidSigningStorePass>
-		<AndroidSigningKeyPass>123456</AndroidSigningKeyPass>
+		<!-- PRODUCTION: Environment variable'dan oku -->
+		<AndroidSigningStorePass>$(ANDROID_KEYSTORE_PASS)</AndroidSigningStorePass>
+		<AndroidSigningKeyPass>$(ANDROID_KEY_PASS)</AndroidSigningKeyPass>
+		<!-- Google Play Store için AAB format zorunlu -->
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)'=='net8.0-ios'">
