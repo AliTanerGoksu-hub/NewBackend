@@ -33,8 +33,9 @@
   <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>
   <TargetPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">18.0</TargetPlatformVersion>
 
-  <!-- Diğer platformlar -->
+  <!-- Android - Google Play Store 2024 gereksinimleri -->
   <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+  <TargetSdkVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">34</TargetSdkVersion>
 
   <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
   <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
@@ -43,6 +44,9 @@
 
   <DefaultLanguage>tr</DefaultLanguage>
   <AndroidSigningKeyStore>bsm-release.keystore</AndroidSigningKeyStore>
+  
+  <!-- Privacy Policy URL - Store yayınlanması için zorunlu -->
+  <PrivacyPolicyUrl>https://yourdomain.com/privacy-policy.html</PrivacyPolicyUrl>
 </PropertyGroup>
 
 
