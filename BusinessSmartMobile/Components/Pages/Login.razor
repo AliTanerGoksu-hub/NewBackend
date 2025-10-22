@@ -1,0 +1,101 @@
+﻿@page "/"
+@layout Layout.EmptyLayout
+@inject AuthService AuthService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject DeviceService Device
+@inject NavigationManager Navigation
+
+
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+}
+
+@if (_error)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">@_errorMessage</MudAlert>
+}
+<MudPaper Elevation="4" Class="d-flex flex-column align-center justify-center pa-6" Style="max-width:400px; margin:auto; margin-top:15vh;">
+    <MudText Typo="Typo.h5" Class="mb-4">Giriş Yap</MudText>
+    <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Inherit" @onclick="@(() => Navigation.NavigateTo("/settings"))" />
+    @*<MudTextField @bind-Value="UserName" Label="Kullanıcı Adı" Required="true" RequiredError="Kullanıcı adı gerekli" Variant="Variant.Filled" />*@
+    <MudSelect @bind-Value="UserName" Label="Kullanıcı">
+        @foreach (var dp in list)
+        {
+            <MudSelectItem Value="@dp.PERSONELKODU">@dp.PERSONELADI</MudSelectItem>
+        }
+    </MudSelect>
+    <MudTextField @bind-Value="Password" Label="Şifre" InputType="InputType.Password" Required="true" RequiredError="Şifre gerekli" Variant="Variant.Filled" Class="mt-2" />
+
+    <MudButton OnClick="LogControl" Color="Color.Primary" Variant="Variant.Filled" Class="mt-4" Disabled="@(!IsValid)">
+        Giriş Yap
+    </MudButton>
+
+    <MudText Class="mt-2" Color="Color.Error">@ErrorMessage</MudText>
+</MudPaper>
+@code {
+    private string UserName { get; set; }
+    private string Password { get; set; }
+    private string ErrorMessage { get; set; }
+    private string _errorMessage = "";
+    private string apiMessage = string.Empty;
+    private bool _loading = false;
+    private bool _error = false;
+    Auth auth = new Auth();
+    List<Auth> list = new List<Auth>();
+    private bool IsValid => !string.IsNullOrWhiteSpace(UserName) && !string.IsNullOrWhiteSpace(Password);
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        MobileUsers();
+    }
+    private async void MobileUsers()
+    {
+        (list, apiMessage) = await AuthService.GetMobileUsers();
+    }
+    private async void LogControl()
+    {
+
+        //  string deviceId = Device.GetIdentifier();
+
+        (auth, apiMessage) = await AuthService.Login(UserName, Password);
+
+        try
+        {
+            _loading = true;
+            _error = false;
+
+            if (!string.IsNullOrEmpty(apiMessage))
+            {
+                _error = true;
+                _errorMessage = apiMessage;  // Hata mesajını buraya atıyoruz
+            }
+            else if (auth == null)
+            {
+                _error = true;
+                _errorMessage = "Girilen Filtreye Ait Veri Bulunamadı.";
+            }
+            else
+            {
+                Navigation.NavigateTo("/home");
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _errorMessage = $"Hata oluştu: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+
+    }
+
+
+
+}

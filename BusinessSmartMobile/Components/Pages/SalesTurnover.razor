@@ -1,0 +1,173 @@
+﻿@page "/salesTurnover"
+@inject ReportsService ReportsService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+@inject AuthService _authService
+@using System.Globalization;
+
+@*<MudContainer Class="mx-0 mt-4">*@
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+}
+
+@if (_error)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">@_errorMessage</MudAlert>
+}
+
+<MudTable Class="mx-2"
+          Breakpoint="Breakpoint.None"
+          Items="list" Dense="true"
+          Hover="true"
+          SortLabel="Sort By"
+          RowsPerPage="25"
+          Striped="true"
+          Bordered="true"
+          FixedHeader="true"
+          FixedFooter="true"
+          Style="height:90vh;overflow-y:auto">
+    <ToolBarContent>
+        <div style="flex: 1;">
+            <MudText Typo="Typo.h6">Satış Ciroları</MudText>
+        </div>
+
+        <div>
+               <MudIconButton Icon="@Icons.Material.Filled.FilterAlt" @onclick="@(() => OpenFilterDialog())" aria-label="Filtre"></MudIconButton>
+        </div>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesTurnover, object>(x=>x.periyod)">Periyod</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesTurnover, object>(x=>x.miktar)">Miktar</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesTurnover, object>(x=>x.tutar)">Tutar</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesTurnover, object>(x=>x.iskonto)">İskonto</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesTurnover, object>(x=>x.toplamKdv)">Toplam KDV</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesTurnover, object>(x=>x.netCiro)">Net Ciro</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesTurnover, object>(x=>x.musteriSayisi)">Müşteri Sayısı</MudTableSortLabel></MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Periyod">@context.periyod</MudTd>
+        <MudTd DataLabel="Miktar" Style="text-align:right">@context.miktar.ToString("N2")</MudTd>
+        <MudTd DataLabel="Tutar" Style="text-align:right">@context.tutar.ToString("N2")</MudTd>
+        <MudTd DataLabel="İskonto" Style="text-align:right">@context.iskonto.ToString("N2")</MudTd>
+        <MudTd DataLabel="Toplam KDV" Style="text-align:right">@context.toplamKdv.ToString("N2")</MudTd>
+        <MudTd DataLabel="Net Ciro" Style="text-align:right">@context.netCiro.ToString("N2")</MudTd>
+        <MudTd DataLabel="Müşteri Sayısı" Style="text-align:right">@context.musteriSayisi.ToString("N2")</MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="Gösterilecek Satır" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    //private IEnumerable<TbFirma> Elements = Enumerable.Empty<TbFirma>();
+    private List<TbSalesTurnover> list = new List<TbSalesTurnover>();
+    private string apiMessage = string.Empty;
+    private TbSalesTurnover filteredCheque = new TbSalesTurnover();
+    static DateTime now = DateTime.Now;
+    static DateTime firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
+    static DateTime lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+    string startDateStr = firstDayOfMonth.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+    string endDateStr = lastDayOfMonth.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+    static string sDepo = "";
+    private bool _loading = true;
+    private bool _error = false;
+    private string _errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        sDepo = _authService.Auth.sDepo;
+        LoadList(startDateStr, endDateStr, sDepo);
+    }
+
+
+
+
+
+    private async Task OpenFilterDialog()
+    {
+        try
+        {
+            DateTime startDate = DateTime.ParseExact(startDateStr, "dd.MM.yyyy", CultureInfo.InvariantCulture);
+            DateTime endDate = DateTime.ParseExact(endDateStr, "dd.MM.yyyy", CultureInfo.InvariantCulture);
+            var parameters = new DialogParameters
+            {
+                ["FilterOptions"] = new ReportFilterOptions
+                {
+                    ShowVendor = false,
+                    ShowStore = false,
+                    ShowClass = false,
+                    ShowWarehouse = true,
+                    ShowType = false
+                },
+                ["Filter"] = new ReportFilters
+                {
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    Warehouse = sDepo
+
+                }
+
+            };
+
+            var dialog = DialogService.Show<BusinessSmartMobile.Components.Custom_Components.ReportFilter>("Filtrele", parameters);
+            var result = await dialog.Result;
+
+            if (!result.Cancelled)
+            {
+                var filter = (ReportFilters)result.Data;
+                DateTime resStartDate = filter.StartDate.Value;
+                startDateStr = resStartDate.ToString("dd.MM.yyyy");
+                DateTime resEndDate = filter.EndDate.Value;
+                endDateStr = resEndDate.ToString("dd.MM.yyyy");
+                sDepo = filter.Warehouse;
+                LoadList(startDateStr, endDateStr, sDepo);
+
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _errorMessage = $"Hata oluştu: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+
+
+    private async void LoadList(string startDate, string endDate, string sSaticiRumuzu)
+    {
+
+
+        try
+        {
+            (list, apiMessage) = await ReportsService.GetSalesTurnover(startDate, endDate, sDepo);
+            _loading = true;
+            _error = false;
+
+            if (!string.IsNullOrEmpty(apiMessage))
+            {
+                _error = true;
+                _errorMessage = apiMessage;
+            }
+            else if (!list.Any())
+            {
+                _error = true;
+                _errorMessage = "Girilen Filtreye Ait Veri Bulunamadı.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _errorMessage = $"Hata oluştu: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+
+    }
+}

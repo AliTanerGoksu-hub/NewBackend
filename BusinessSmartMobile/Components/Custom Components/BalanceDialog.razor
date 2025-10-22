@@ -1,0 +1,70 @@
+﻿@inject BusinessPartnerService BusinessPartnerService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+<MudDialog>
+    <DialogContent>
+        <MudTable Breakpoint="Breakpoint.None"
+                  Items="balances" Dense="true"
+                  Hover="true"
+                  SortLabel="Sort By"
+                  RowsPerPage="10"
+                  Striped="true"
+                  Bordered="true"
+                  FixedHeader="true"
+                  FixedFooter="true"
+                  Style="overflow-y:auto">
+            <HeaderContent>
+                <MudTh>İşlemler</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Balance, object>(x=>x.islemTipi)">İşlem Tipi</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Balance, object>(x=>x.tarih)">Tarih</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Balance, object>(x=>x.lAlacakTutar)">Alacak</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Balance, object>(x=>x.lBorcTutar)">Borç</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Balance, object>(x=>x.kalanBakiye)">Kalan Bakiye</MudTableSortLabel></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>  <MudIconButton Icon="@Icons.Material.Filled.ContentPasteSearch" @onclick="@(() => OpenReceiptDetailDialog(context.lFisNo))"></MudIconButton></MudTd>
+                <MudTd DataLabel="İşlem Tipi">@context.islemTipi</MudTd>
+                <MudTd DataLabel="Tarih">@context.tarih</MudTd>
+                <MudTd DataLabel="Alacak" Style="text-align:right">@context.lAlacakTutar.ToString("N2")</MudTd>
+                <MudTd DataLabel="Borç" Style="text-align:right">@context.lBorcTutar.ToString("N2")</MudTd>
+                <MudTd DataLabel="Kalan Bakiye" Style="text-align:right">@context.kalanBakiye.ToString("N2")</MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="Gösterilecek Satır" />
+            </PagerContent>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Cancel">Çıkış</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<Balance> balances { get; set; }
+
+
+    private async Task OpenReceiptDetailDialog(string lFisNo)
+    {
+        List<ReceiptDetail> receipt = await BusinessPartnerService.GetReceiptDetail(lFisNo);
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraLarge };
+        var parameters = new DialogParameters
+ {
+     { "receipts", receipt } 
+     };
+
+        var dialog = await DialogService.ShowAsync<BusinessSmartMobile.Components.Custom_Components.ReceiptDetailDialog>(
+            "Fiş Detayı",
+            parameters,
+            options);
+    }
+
+
+    private void Cancel()
+    {
+        MudDialog.Cancel(); // İptal et ve veri döndürme
+    }
+}

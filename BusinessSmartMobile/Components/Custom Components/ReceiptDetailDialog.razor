@@ -1,0 +1,60 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudTable Breakpoint="Breakpoint.None"
+                  Items="receipts" Dense="true"
+                  Hover="true"
+                  SortLabel="Sort By"
+                  RowsPerPage="10"
+                  Striped="true"
+                  Bordered="true"
+                  FixedHeader="true"
+                  FixedFooter="true"
+                  Style="overflow-y:auto">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<ReceiptDetail, object>(x=>x.lFisNo)">Fiş No</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ReceiptDetail, object>(x=>x.lSiparisNo)">Sipariş No</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ReceiptDetail, object>(x=>x.sKodu)">Stok Kodu</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ReceiptDetail, object>(x=>x.sAciklama)">Stok Adı</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ReceiptDetail, object>(x=>x.lMiktari)">Miktar</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ReceiptDetail, object>(x=>x.lFiyati)">Fiyat</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ReceiptDetail, object>(x=>x.lTutari)">Tutar</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ReceiptDetail, object>(x=>x.lIskontosuzTutari)">İskontosuz Tutar</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ReceiptDetail, object>(x=>x.nIskontoYuzdesi)">İskonto Yüzdesi</MudTableSortLabel></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Fiş No">@context.lFisNo</MudTd>
+                <MudTd DataLabel="Sipariş No">@context.lSiparisNo</MudTd>
+                <MudTd DataLabel="Stok Kodu">@context.sKodu</MudTd>
+                <MudTd DataLabel="Stok Adı">@context.sAciklama</MudTd>
+                <MudTd DataLabel="Miktar" Style="text-align:right">@context.lMiktari.ToString("N2")</MudTd>
+                <MudTd DataLabel="Fiyat" Style="text-align:right">@context.lFiyati.ToString("N2")</MudTd>
+                <MudTd DataLabel="Tutar" Style="text-align:right">@context.lTutari.ToString("N2")</MudTd>
+                <MudTd DataLabel="İskontosuz Tutar" Style="text-align:right">@context.lIskontosuzTutari.ToString("N2")</MudTd>
+                <MudTd DataLabel="İskonto Yüzdesi" Style="text-align:right">@context.nIskontoYuzdesi.ToString("N2")</MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="Gösterilecek Satır" />
+            </PagerContent>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Cancel">Çıkış</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<ReceiptDetail> receipts { get; set; }
+
+
+
+
+
+    private void Cancel()
+    {
+        MudDialog.Cancel(); // İptal et ve veri döndürme
+    }
+}

@@ -1,0 +1,29 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="tbFirma.sKodu" Label="Firma Kodu" />
+        <MudTextField @bind-Value="tbFirma.sAciklama" Label="Firma Adı" />
+        <MudTextField @bind-Value="tbFirma.sAdres1" Label="Adres" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Close">Filtrele</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Cancel">İptal</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public TbFirma tbFirma { get; set; } = new TbFirma();
+
+    private void Close() => MudDialog.Close(DialogResult.Ok(tbFirma));
+
+ 
+
+
+    private void Cancel()
+    {
+        MudDialog.Cancel(); // İptal et ve veri döndürme
+    }
+}

@@ -1,0 +1,96 @@
+﻿@inject OrderService OrderService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject AuthService _authService
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="6">
+                <!-- lMiktari double ise T="double"; decimal ise T="decimal" yapın -->
+                <MudNumericField T="double"
+                                @bind-Value="siparis.lMiktari"
+                                Label="Sipariş Miktarı"
+                                Immediate="true"
+                                Min="0" />
+            </MudItem>
+        </MudGrid>
+        @if (_error)
+        {
+            <MudAlert Severity="Severity.Error" Class="my-4">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="UpdateSelectedOrder">Güncelle</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Cancel">İptal</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _error = false;
+    private string _errorMessage = "";
+
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public TbSiparis siparis { get; set; } = new TbSiparis();
+
+    [Parameter]
+    public string sSaticiRumuzu { get; set; }
+
+    [Parameter]
+    public string sDepo { get; set; }
+
+    private async Task UpdateSelectedOrder()
+    {
+        if (_authService.Auth == null)
+        {
+            _error = true;
+            _errorMessage = "Kullanıcı giriş yapmamış.";
+            StateHasChanged();
+            return;
+        }
+
+        // Hatalı kontrol düzeltildi
+        if (siparis.lMiktari <= 0)
+        {
+            _error = true;
+            _errorMessage = "Miktar giriniz.";
+            StateHasChanged();
+            return;
+        }
+
+        if (sSaticiRumuzu != _authService.Auth.sSaticiRumuzu)
+        {
+            _error = true;
+            _errorMessage = "Geçersiz satıcı rumuzu.";
+            StateHasChanged();
+            return;
+        }
+
+        var sonuc = await OrderService.UpdateOrder(
+            siparis.nSiparisID,
+            siparis.lMiktari,
+            siparis.nIskontoYuzdesi,
+            sSaticiRumuzu,
+            sDepo
+        );
+
+        if ((sonuc ?? string.Empty).Trim() == "OK")
+        {
+            MudDialog.Close(DialogResult.Ok(siparis));
+        }
+        else
+        {
+            _error = true;
+            _errorMessage = sonuc;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

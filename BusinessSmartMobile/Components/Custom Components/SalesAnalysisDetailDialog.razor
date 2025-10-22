@@ -1,0 +1,86 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudTable Breakpoint="Breakpoint.None"
+                  Items="salesAnalysisDetail" Dense="true"
+                  Hover="true"
+                  SortLabel="Sort By"
+                  RowsPerPage="10"
+                  Striped="true"
+                  Bordered="true"
+                  FixedHeader="true"
+                  FixedFooter="true"
+                  Style="overflow-y:auto">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.dteTarih)">Tarih</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.sMusteriAdi)">Hesap Adı</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.sKodu)">Stok Kodu</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.sStokAciklama)">Stok Adı</MudTableSortLabel></MudTh>
+                @if (sizeOpen == "1")
+                {
+                    <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x => x.sBeden)">Beden</MudTableSortLabel></MudTh>
+                }
+                @if (colorOpen == "1")
+                {
+                    <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x => x.sRenk)">Renk</MudTableSortLabel></MudTh>
+                }
+                    <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.Miktar)">Miktar</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.MALIYET)">Maliyet</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.Fiyat)">Fiyat</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.Iskonto)">İskonto</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.lNetTutar)">Net Tutar</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.sFiyatTipi)">Fiyat Tipi</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.satici)">Satıcı</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<SalesAnalysisDetail, object>(x=>x.sMagaza)">Mağaza</MudTableSortLabel></MudTh>
+
+                </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Tarih">@context.dteTarih</MudTd>
+                <MudTd DataLabel="Hesap Adı">@context.sMusteriAdi</MudTd>
+                <MudTd DataLabel="Stok Kodu">@context.sKodu</MudTd>
+                <MudTd DataLabel="Stok Adı">@context.sStokAciklama</MudTd>
+                @if (sizeOpen == "1")
+                {
+                    <MudTd DataLabel="Beden">@context.sBeden</MudTd>
+                }
+                @if (colorOpen == "1")
+                {
+                    <MudTd DataLabel="Renk">@context.sRenk</MudTd>
+                }
+                    <MudTd DataLabel="Miktar" Style="text-align:right">@context.Miktar</MudTd>
+                    <MudTd DataLabel="Maliyet" Style="text-align:right">@context.MALIYET</MudTd>
+                    <MudTd DataLabel="Fiyat" Style="text-align:right">@context.Fiyat</MudTd>
+                    <MudTd DataLabel="İskonto" Style="text-align:right">@context.Iskonto</MudTd>
+                    <MudTd DataLabel="Net Tutar" Style="text-align:right">@context.lNetTutar</MudTd>
+                    <MudTd DataLabel="Fiyat Tipi">@context.sFiyatTipi</MudTd>
+                    <MudTd DataLabel="Satıcı">@context.satici</MudTd>
+                    <MudTd DataLabel="Mağaza">@context.sMagaza</MudTd>
+                </RowTemplate>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="Gösterilecek Satır" />
+            </PagerContent>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Cancel">Çıkış</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private static string colorOpen = CommonParameters.colorOpen;
+    private static string sizeOpen = CommonParameters.sizeOpen;
+
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<SalesAnalysisDetail> salesAnalysisDetail{ get; set; }
+
+
+
+
+
+    private void Cancel()
+    {
+        MudDialog.Cancel(); // İptal et ve veri döndürme
+    }
+}

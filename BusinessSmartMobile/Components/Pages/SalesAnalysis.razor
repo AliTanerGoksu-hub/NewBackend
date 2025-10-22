@@ -1,0 +1,206 @@
+﻿@page "/salesAnalysis"
+@inject ReportsService ReportsService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+@using System.Globalization;
+
+@*<MudContainer Class="mx-0 mt-4">*@
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+}
+
+@if (_error)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">@_errorMessage</MudAlert>
+}
+
+<MudTable Class="mx-2"
+          Breakpoint="Breakpoint.None"
+          Items="list" Dense="true"
+          Hover="true"
+          SortLabel="Sort By"
+          RowsPerPage="25"
+          Striped="true"
+          Bordered="true"
+          FixedHeader="true"
+          FixedFooter="true"
+          Style="height:90vh;overflow-y:auto">
+    <ToolBarContent>
+        <div style="flex: 1;">
+            <MudText Typo="Typo.h6">Satış Analiz</MudText>
+        </div>
+
+        <div>
+            <MudIconButton Icon="@Icons.Material.Filled.FilterAlt" @onclick="@(() => OpenFilterDialog())" aria-label="Filtre"></MudIconButton>
+        </div>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>İşlemler</MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesAnalysis, object>(x=>x.sMusteriAdi)">Müşteri</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesAnalysis, object>(x=>x.satici)">Satıcı</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesAnalysis, object>(x=>x.dteTarih)">Tarih</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesAnalysis, object>(x=>x.nFirmaID)">Firma ID</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesAnalysis, object>(x=>x.lNo)">Fiş No</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<TbSalesAnalysis, object>(x=>x.nAlisVerisID)">Alış-Veriş ID</MudTableSortLabel></MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>  <MudIconButton Icon="@Icons.Material.Filled.ContentPasteSearch" @onclick="@(() => OpenReceiptDetailDialog(context.nAlisVerisID))"></MudIconButton></MudTd>
+        <MudTd DataLabel="Müşteri">@context.sMusteriAdi</MudTd>
+        <MudTd DataLabel="Satıcı">@context.satici</MudTd>
+        <MudTd DataLabel="Tarih">
+            @if (!string.IsNullOrEmpty(@context.dteTarih?.ToString()))
+            {
+                @context.dteTarih.ToString().Substring(0, 10);
+            }
+        </MudTd>
+        <MudTd DataLabel="Firma ID">@context.nFirmaID</MudTd>
+        <MudTd DataLabel="Fiş No">@context.lNo</MudTd>
+        <MudTd DataLabel="Alış-Veriş ID">@context.nAlisVerisID</MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="Gösterilecek Satır" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    //private IEnumerable<TbFirma> Elements = Enumerable.Empty<TbFirma>();
+    private List<TbSalesAnalysis> list = new List<TbSalesAnalysis>();
+    private string apiMessage = string.Empty;
+
+    private TbSalesAnalysis filteredCheque = new TbSalesAnalysis();
+    private bool _loading = true;
+    private bool _error = false;
+    private string _errorMessage = "";
+    static DateTime now = DateTime.Now;
+    static DateTime firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
+    static DateTime lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+    //string startDateStr = firstDayOfMonth.ToString("dd/MM/yyyy");
+    //string endDateStr = lastDayOfMonth.ToString("dd/MM/yyyy");
+    string startDateStr = firstDayOfMonth.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+    string endDateStr = lastDayOfMonth.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+
+    protected override async Task OnInitializedAsync()
+    {
+        LoadList(startDateStr, endDateStr);
+    }
+
+
+
+
+    private async Task OpenFilterDialog()
+    {
+        try
+        {
+            //DateTime startDate = DateTime.ParseExact(startDateStr, "dd/MM/yyyy", CultureInfo.InvariantCulture);
+            //DateTime endDate = DateTime.ParseExact(endDateStr, "dd/MM/yyyy", CultureInfo.InvariantCulture);
+            DateTime startDate = DateTime.ParseExact(startDateStr, "dd.MM.yyyy", CultureInfo.InvariantCulture);
+            DateTime endDate = DateTime.ParseExact(endDateStr, "dd.MM.yyyy", CultureInfo.InvariantCulture);
+            var parameters = new DialogParameters
+            {
+                ["FilterOptions"] = new ReportFilterOptions
+                {
+                    ShowVendor = false,
+                    ShowStore = false,
+                    ShowClass = false,
+                    ShowWarehouse = false,
+                    ShowType = false
+                },
+                ["Filter"] = new ReportFilters
+                {
+                    StartDate = startDate,
+                    EndDate = endDate
+                }
+
+            };
+
+            var dialog = DialogService.Show<BusinessSmartMobile.Components.Custom_Components.ReportFilter>("Filtrele", parameters);
+            var result = await dialog.Result;
+
+            if (!result.Cancelled)
+            {
+                var filter = (ReportFilters)result.Data;
+                DateTime resStartDate = filter.StartDate.Value;
+                startDateStr = resStartDate.ToString("dd.MM.yyyy");
+                DateTime resEndDate = filter.EndDate.Value;
+                endDateStr = resEndDate.ToString("dd.MM.yyyy");
+                LoadList(startDateStr, endDateStr);
+
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _errorMessage = $"Hata oluştu: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+
+
+    private async void LoadList(string startDate, string endDate)
+    {
+
+
+        try
+        {
+            (list, apiMessage) = await ReportsService.GetSalesAnalysis(startDate, endDate);
+            _loading = true;
+            _error = false;
+
+            if (!string.IsNullOrEmpty(apiMessage))
+            {
+                _error = true;
+                _errorMessage = apiMessage;
+            }
+            else if (!list.Any())
+            {
+                _error = true;
+                _errorMessage = "Girilen Filtreye Ait Veri Bulunamadı.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _errorMessage = $"Hata oluştu: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+
+    }
+    private async Task OpenReceiptDetailDialog(string nAlisVerisID)
+    {
+        try
+        {
+            (List<SalesAnalysisDetail> detail, _errorMessage) = await ReportsService.GetSalesAnalysisDetail(startDateStr, endDateStr, nAlisVerisID);
+            if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                _error = true;
+                _errorMessage = $"Hata oluştu: {_errorMessage}";
+                StateHasChanged();
+            }
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraLarge };
+            var parameters = new DialogParameters
+        {
+               { "salesAnalysisDetail", detail }
+            };
+
+            var dialog = await DialogService.ShowAsync<BusinessSmartMobile.Components.Custom_Components.SalesAnalysisDetailDialog>(
+                "Satış Analiz Detayı",
+                parameters,
+                options);
+
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _errorMessage = $"Hata oluştu: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+}

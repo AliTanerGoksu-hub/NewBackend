@@ -1,0 +1,233 @@
+﻿@page "/payment"
+@inject IDialogService DialogService
+@inject PaymentService PaymentService
+@inject NavigationManager Navigation
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+}
+@if (_error)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">@_errorMessage</MudAlert>
+}
+<MudCard Class="pa-4">
+    <MudForm>
+        <MudGrid Spacing="1">
+            <MudItem xs="5">
+                <MudTextField Label="Firma Adı" ReadOnly="true" FullWidth="true" @bind-Value="_firmaAdi" />
+            </MudItem>
+            <MudItem xs="4">
+                <MudTextField @bind-Value="_cariHesap"
+                              ReadOnly="true"
+                              Label="Cari Hesap"
+                              Class="flex-grow-1" />
+            </MudItem>
+            <MudItem xs="2">
+                <MudIconButton Icon="@Icons.Material.Filled.Search"
+                               Color="Color.Primary"
+                               OnClick="SearchCariHesap" />
+            </MudItem>
+
+
+
+            <MudItem xs="5">
+                <MudTextField Label="Ödeme Şekli" ReadOnly="true" FullWidth="true" @bind-Value="_odemeSekli" />
+            </MudItem>
+            <MudItem xs="4">
+                <MudTextField @bind-Value="_odemeSekliKodu"
+                              ReadOnly="true"
+                              Label="Kodu"
+                              Class="flex-grow-1" />
+            </MudItem>
+            <MudItem xs="2">
+                <MudIconButton Icon="@Icons.Material.Filled.Search"
+                               Color="Color.Primary"
+                               OnClick="SearchBankaHesap" />
+            </MudItem>
+            <MudItem xs="5">
+                <MudTextField @bind-Value="_tutar"
+                              Label="Tutar"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.End"
+                              AdornmentText="TL" />
+            </MudItem>
+
+
+
+            <MudItem xs="12">
+                <MudGrid>
+                    <MudItem xs="6">
+                        <MudButton FullWidth="true"
+                                   Color="Color.Primary"
+                                   Variant="Variant.Filled"
+                                   OnClick="SaveEntry">
+                            Ödemeyi Yap
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudButton FullWidth="true"
+                                   Color="Color.Secondary"
+                                   Variant="Variant.Outlined"
+                                   OnClick="CancelEntry">
+                            Vazgeç
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudItem>
+        </MudGrid>
+    </MudForm>
+</MudCard>
+
+@code {
+    private string _firmaAdi = "";
+    private string _cariHesap = "";
+    private string _odemeSekli = "";
+    private string _odemeSekliKodu = "";
+    private double _tutar = 0;
+    private string _aciklama = "";
+    private bool _kesintidis = false;
+    private TbFirma? SelectedMusteri;
+    private string apiMessage = string.Empty;
+    private bool _loading = true;
+    private string FirmaKodu { get; set; }
+    private string FirmaAciklama { get; set; }
+    private string StokKodu { get; set; }
+    private string StokAdi { get; set; }
+    private string Barcode { get; set; }
+    private List<TbFirma> firmaList = new List<TbFirma>();
+    private List<TbOdemeSekli> odemeSekliList = new List<TbOdemeSekli>();
+    private bool _error = false;
+    private string _errorMessage = "";
+
+
+    protected override async void OnInitialized()
+    {
+        await LoadComponentValues();
+        try
+        {
+            _loading = true;
+            _error = false;
+
+            if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                _error = true;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _errorMessage = $"Hata oluştu: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+
+    private async Task<bool> LoadComponentValues()
+    {
+        var tasks = new List<Func<Task<bool>>>
+{
+     async () => await GetData(() => PaymentService.GetAccounts() ,data => firmaList = data),
+     async () => await GetData(() => PaymentService.GetPaymentType() ,data => odemeSekliList = data),
+
+      };
+
+        foreach (var task in tasks)
+        {
+            if (!await task())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    private async Task<bool> GetData<T>(Func<Task<(T, string)>> fetchData, Action<T> setData)
+    {
+        try
+        {
+            var (result, message) = await fetchData();
+
+            if (!string.IsNullOrEmpty(message))
+            {
+                _error = true;
+                _errorMessage = message;
+                return false;
+            }
+
+            setData(result);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _errorMessage = $"Hata oluştu: {ex.Message}";
+            return false;
+        }
+    }
+    private async Task SearchCariHesap()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var parameters = new DialogParameters { { "Musteriler", firmaList } };
+        var dialog = await DialogService.ShowAsync<BusinessSmartMobile.Components.Custom_Components.SelectAccountDialog>("Filtrele", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            TbFirma tb = (TbFirma)result.Data;
+
+            _cariHesap = tb.sKodu;
+            _firmaAdi = tb.sAciklama;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchBankaHesap()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var parameters = new DialogParameters { { "PaymentTypes", odemeSekliList } };
+        var dialog = await DialogService.ShowAsync<BusinessSmartMobile.Components.Custom_Components.SelectPaymentType>("Filtrele", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            TbOdemeSekli tb = (TbOdemeSekli)result.Data;
+
+            _odemeSekliKodu = tb.sOdemeSekli;
+            _odemeSekli = tb.sAciklama;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveEntry()
+    {
+        var sonuc = await PaymentService.AddPayment(_cariHesap, _odemeSekliKodu, _tutar);
+        Console.WriteLine(sonuc);
+        if (sonuc == "OK")
+        {
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            _error = true;
+            _errorMessage = sonuc;
+            StateHasChanged();
+        }
+
+
+
+
+
+
+    }
+
+    private void CancelEntry()
+    {
+        Navigation.NavigateTo("/");
+
+    }
+}

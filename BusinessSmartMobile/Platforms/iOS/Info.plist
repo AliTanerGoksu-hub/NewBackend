@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UIDeviceFamily</key>
+	<array>
+		<integer>1</integer>
+		<integer>2</integer>
+	</array>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<!-- App Icon Configuration - .NET MAUI otomatik yönetir -->
+	<!-- XSAppIconAssets kaldırıldı - MAUI kendi icon asset'lerini oluşturur -->
+	
+	<!-- Icon'un daha net görünmesi için prerendered (anti-aliasing kapalı) -->
+	<key>UIPrerenderedIcon</key>
+	<false/>
+	
+	<!-- Permission Açıklamaları - Store için zorunlu -->
+	<key>NSCameraUsageDescription</key>
+	<string>Bu uygulama, ürün barkodlarını okumak için kameranıza erişmek istiyor. Barkod tarama özelliğini kullanabilmek için izin vermeniz gerekmektedir.</string>
+	
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Bu uygulama, raporları ve faturaları kaydetmek için foto galerinize erişmek istiyor.</string>
+	
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Bu uygulama, size en yakın depoları göstermek için konumunuzu kullanmak istiyor.</string>
+	
+	<key>CFBundleIdentifier</key>
+	<string>com.barkodyazilim.bsm</string>
+
+	<!-- 
+		ATS (App Transport Security) Ayarları
+		B2B ENTERPRISE APPLICATION JUSTIFICATION:
+		
+		Bu uygulama, müşterilerin kendi backend sunucularına bağlanır.
+		Her müşterinin backend URL'i farklıdır ve Settings sayfasından dinamik olarak ayarlanır.
+		Bazı müşteriler HTTP, bazıları HTTPS kullanabilir.
+		Backend sunucu adresleri önceden bilinemediği için NSAllowsArbitraryLoads kullanılmıştır.
+		
+		NOT: Son kullanıcılara HTTPS kullanmaları şiddetle önerilir.
+	-->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<!-- 
+			B2B kullanımı için arbitrary loads'a izin ver
+			Müşteri backend sunucuları HTTP kullanıyor olabilir
+			Apple App Review: Bu bir B2B enterprise çözümüdür, 
+			backend URL'leri dinamik ve müşteri tarafından yapılandırılır
+		-->
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		
+		<!-- 
+			GÜVENLİK NOTU:
+			- Settings sayfasında kullanıcılara HTTPS kullanmaları önerilmelidir
+			- Uygulama içinde güvenlik uyarısı gösterilebilir
+			- Her müşterinin kendi güvenlik politikası vardır
+		-->
+	</dict>
+
+	<!-- Privacy Policy URL - Store için zorunlu -->
+	<key>NSPrivacyPolicyURL</key>
+	<string>https://yourdomain.com/privacy-policy.html</string>
+
+</dict>
+</plist>
