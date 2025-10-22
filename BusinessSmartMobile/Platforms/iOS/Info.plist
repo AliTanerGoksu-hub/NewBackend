@@ -43,43 +43,32 @@
 
 	<!-- 
 		ATS (App Transport Security) Ayarları
-		PRODUCTION: HTTPS kullanın! HTTP'ye izin vermek güvenlik riski oluşturur
-		Apple Review bu ayarı sorguluyor - gerekçe gösterin veya HTTPS'e geçin
+		B2B ENTERPRISE APPLICATION JUSTIFICATION:
+		
+		Bu uygulama, müşterilerin kendi backend sunucularına bağlanır.
+		Her müşterinin backend URL'i farklıdır ve Settings sayfasından dinamik olarak ayarlanır.
+		Bazı müşteriler HTTP, bazıları HTTPS kullanabilir.
+		Backend sunucu adresleri önceden bilinemediği için NSAllowsArbitraryLoads kullanılmıştır.
+		
+		NOT: Son kullanıcılara HTTPS kullanmaları şiddetle önerilir.
 	-->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<!-- 
-			GEÇICI: Backend API HTTPS kullanana kadar
-			Aşağıdaki NSAllowsArbitraryLoads'u false yapıp, 
-			NSExceptionDomains kullanın (daha güvenli)
+			B2B kullanımı için arbitrary loads'a izin ver
+			Müşteri backend sunucuları HTTP kullanıyor olabilir
+			Apple App Review: Bu bir B2B enterprise çözümüdür, 
+			backend URL'leri dinamik ve müşteri tarafından yapılandırılır
 		-->
 		<key>NSAllowsArbitraryLoads</key>
-		<false/>
+		<true/>
 		
-		<!-- Spesifik domain'ler için HTTP exception (Önerilen yöntem) -->
-		<key>NSExceptionDomains</key>
-		<dict>
-			<!-- 
-				Backend API domain'inizi buraya ekleyin
-				Örnek: yourapi.com için HTTP'ye izin ver
-			-->
-			<!--
-			<key>yourapi.example.com</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-			</dict>
-			-->
-			
-			<!-- Local development için (sadece test sırasında) -->
-			<key>localhost</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-			</dict>
-		</dict>
+		<!-- 
+			GÜVENLİK NOTU:
+			- Settings sayfasında kullanıcılara HTTPS kullanmaları önerilmelidir
+			- Uygulama içinde güvenlik uyarısı gösterilebilir
+			- Her müşterinin kendi güvenlik politikası vardır
+		-->
 	</dict>
 
 	<!-- Privacy Policy URL - Store için zorunlu -->
