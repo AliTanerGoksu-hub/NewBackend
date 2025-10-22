@@ -91,9 +91,8 @@
 	<!-- Duplicate Android PropertyGroup sections removed - consolidated above -->
 
 	<ItemGroup>
-		<!-- App Icon - Basitleştirilmiş yüksek kalite icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" 
-		          BaseSize="512,512" />
+		<!-- App Icon - Orijinal logo -->
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" />
 
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#ffffff" BaseSize="128,128" />
