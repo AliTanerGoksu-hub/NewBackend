@@ -186,6 +186,16 @@ ORDER BY tbSiparis.dteSiparisTarihi desc, tbSiparis.lSiparisNo, tbFirma.sKodu";
                     tbFirma.sKodu";
 
                     var stocks = await connection.QueryAsync<TbSiparis>(query, new { lSiparisNo, sSaticiRumuzu });
+                    
+                    // Debug: Açıklama alanlarını kontrol et
+                    foreach (var stock in stocks)
+                    {
+                        Console.WriteLine($"Backend DEBUG - SiparisID: {stock.nSiparisID}");
+                        Console.WriteLine($"Backend DEBUG - sAciklama1: '{stock.sAciklama1}'");
+                        Console.WriteLine($"Backend DEBUG - sAciklama2: '{stock.sAciklama2}'");
+                        Console.WriteLine($"Backend DEBUG - sAciklama3: '{stock.sAciklama3}'");
+                    }
+                    
                     return Ok(stocks);
                 }
             }
