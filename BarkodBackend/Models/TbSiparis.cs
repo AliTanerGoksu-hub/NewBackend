@@ -21,6 +21,12 @@
         public string nSiparisTipi { get; set; } = "1";
         public string sKullaniciAdi { get; set; }
         public double lFiyati { get; set; }
+        
+        public string sAciklama1 { get; set; }
+        public string sAciklama2 { get; set; }
+        public string sAciklama3 { get; set; }
+        public string sAciklama4 { get; set; }
+        public string sAciklama5 { get; set; }
 
 
     }
