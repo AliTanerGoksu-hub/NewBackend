@@ -262,13 +262,25 @@ GROUP BY sKat,sSaticiRumuzu, Satici ORDER BY SUM(lNetTutar),sSaticiRumuzu, Satic
             }
         }
         [HttpGet("DeliveryReport")]
-        public async Task<IActionResult> DeliveryReport(string startDate, string endDate,  string sSaticiRumuzu, string sDepo, string type)
+        public async Task<IActionResult> DeliveryReport(string startDate, string endDate,  string sSaticiRumuzu, string sDepo, string type, string customerName = "", string customerCode = "")
         {
             try
             {
                 using (var connection = new SqlConnection(_connectionString))
                 {
                     string whereCondition = (type == "2") ? "WHERE Q.lMevcut <= 0" : (type == "3") ? "WHERE Q.lMevcut > 0" : ""; 
+                    
+                    // Müşteri adı ve kodu filtresi için ek koşullar
+                    string customerFilter = "";
+                    if (!string.IsNullOrEmpty(customerName))
+                    {
+                        customerFilter += $" AND tbFirma.sAciklama LIKE '%{customerName}%'";
+                    }
+                    if (!string.IsNullOrEmpty(customerCode))
+                    {
+                        customerFilter += $" AND tbFirma.sKodu LIKE '%{customerCode}%'";
+                    }
+                    
                     string query = $@"
 Set DateFormat Dmy
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
@@ -364,6 +376,7 @@ WITH Q AS (
         AND (tbSiparis.nSiparisTipi = 1)
 		AND tbSiparis.sSaticiRumuzu='{sSaticiRumuzu}'
 		AND tbSiparis.sDepo='{sDepo}'
+		{customerFilter}
     GROUP BY
         tbFirma.nFirmaID, tbFirma.sKodu, tbFirma.sAciklama,
         tbSiparis.lSiparisNo, tbSiparis.dteSiparisTarihi, tbSiparis.sSiparisiAlan, tbSiparis.sSiparisiVeren,
