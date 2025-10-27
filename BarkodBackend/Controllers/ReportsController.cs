@@ -99,22 +99,37 @@ WHERE tbStokFisiDetayi.nStokFisiID = '{nAlisVerisID}' and (tbStokFisiDetayi.sFis
             }
         }
         [HttpGet("SalesRemainingReport")]
-        public async Task<IActionResult> GetSalesRemainingReport(string startDate, string endDate, string magaza)
+        public async Task<IActionResult> GetSalesRemainingReport(string startDate, string endDate, string personelKodu, string sSaticiRumuzu, string magaza)
         {
             try
             {
                 using (var connection = new SqlConnection(_connectionString))
                 {
-                    // Magaza filtresi - sadece boş değilse ekle
-                    string magazaFilter1 = string.IsNullOrEmpty(magaza) ? "" : $"And sDepo IN ('{magaza}')";
-                    string magazaFilter2 = string.IsNullOrEmpty(magaza) ? "" : $"AND tbAlisVeris.sMagaza IN ('{magaza}')";
-                    string magazaFilter3 = string.IsNullOrEmpty(magaza) ? "" : $"AND tbStokFisiDetayi.sDepo IN ('{magaza}')";
+                    // Satıcı filtresi: PERSONELKODU 'AD' ile başlıyorsa tümü, değilse sadece kullanıcının satıcısı
+                    string saticiFilter1 = "";
+                    string saticiFilter2 = "";
+                    if (!string.IsNullOrEmpty(personelKodu) && personelKodu.StartsWith("AD", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Admin - tüm satıcılar (filtre ekleme)
+                        saticiFilter1 = "";
+                        saticiFilter2 = "";
+                    }
+                    else if (!string.IsNullOrEmpty(sSaticiRumuzu))
+                    {
+                        // Normal kullanıcı - sadece kendi satıcısı
+                        saticiFilter1 = $" AND sSaticiRumuzu LIKE '{sSaticiRumuzu}%'";
+                        saticiFilter2 = $" AND tbStokFisiDetayi.sSaticiRumuzu LIKE '{sSaticiRumuzu}%'";
+                    }
                     
+                    // Depo filtresi - zorunlu
+                    string magazaFilter1 = !string.IsNullOrEmpty(magaza) ? $" AND sDepo = '{magaza}'" : "";
+                    string magazaFilter2 = !string.IsNullOrEmpty(magaza) ? $" AND tbAlisVeris.sMagaza = '{magaza}'" : "";
+                    string magazaFilter3 = !string.IsNullOrEmpty(magaza) ? $" AND tbStokFisiDetayi.sDepo = '{magaza}'" : "";
                     string query = $@"set dateformat dmy SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED SELECT top 100 *, Mevcut - ISNULL(Bekleyen, 0) AS NetMevcut FROM (SELECT nStokID , sKodu , sStokAciklama , sBarkod ,sBeden,sRenkAdi, sRenk ,
 SUM(Miktar) AS miktar , sSaticiRumuzu,satici,(SELECT TOP 1 tbStokFisiDetayi.dteFisTarihi FROM tbStokFisiDetayi INNER JOIN tbFisTipi ON tbStokFisiDetayi.sFisTipi = tbFisTipi.sFisTipi WHERE (tbStokFisiDetayi.sFisTipi <> 'T')
 AND (tbStokFisiDetayi.sFisTipi = 'FA') AND (tbFisTipi.bSatismi = 0) AND tbStokFisiDetayi.nGirisCikis = 1 AND tbStokFisiDetayi.nStokID = Satislar.nStokID ORDER BY tbStokFisiDetayi.dteFisTarihi DESC) AS SonAlisTarihi ,
 (SELECT TOP 1 ISNULL(tbStokFisiDetayi.lGirisMiktar1 , 0) AS lGirisMiktar1 FROM tbStokFisiDetayi INNER JOIN tbFisTipi ON tbStokFisiDetayi.sFisTipi = tbFisTipi.sFisTipi WHERE (tbStokFisiDetayi.sFisTipi <> 'T') 
-AND (tbStokFisiDetayi.sFisTipi = 'FA') AND (tbFisTipi.bSatismi = 0) AND tbStokFisiDetayi.nGirisCikis = 1 AND tbStokFisiDetayi.nStokID = Satislar.nStokID ORDER BY tbStokFisiDetayi.dteFisTarihi DESC) AS SonAlisMiktari , (SELECT isnull(SUM(tbStokFisiDetayi.lGirisMiktar1 - tbStokFisiDetayi.lCikisMiktar1) , 0) FROM tbStokFisiDetayi WHERE Satislar.nStokID = tbStokFisiDetayi.nStokID  {magazaFilter1}  ) AS mevcut ,
+AND (tbStokFisiDetayi.sFisTipi = 'FA') AND (tbFisTipi.bSatismi = 0) AND tbStokFisiDetayi.nGirisCikis = 1 AND tbStokFisiDetayi.nStokID = Satislar.nStokID ORDER BY tbStokFisiDetayi.dteFisTarihi DESC) AS SonAlisMiktari , (SELECT isnull(SUM(tbStokFisiDetayi.lGirisMiktar1 - tbStokFisiDetayi.lCikisMiktar1) , 0) FROM tbStokFisiDetayi WHERE Satislar.nStokID = tbStokFisiDetayi.nStokID  {magazaFilter1} {saticiFilter1} ) AS mevcut ,
 (SELECT isnull(SUM(tbStokFisiDetayi.lGirisMiktar1 - tbStokFisiDetayi.lCikisMiktar1) , 0) FROM tbStokFisiDetayi WHERE Satislar.nStokID = tbStokFisiDetayi.nStokID ) AS envanter,(SELECT SUM(lKalanMiktar) AS Siparis 
 FROM (SELECT tbStok.nStokID , tbStok.sKodu , tbSiparis.lMiktari - SUM(ISNULL(tbStokFisiDetayi.lSevkMiktari , 0)) + SUM(ISNULL(tbStokFisiDetayi.lSevkIadeMiktari , 0)) AS lKalanMiktar FROM (SELECT nSiparisID , 
 isnull(abs(SUM(lGirisMiktar1 * (nGirisCikis - 2))) , 0) lSevkMiktari , isnull(abs(SUM(lGirisTutar * (nGirisCikis - 2))) , 0) lSevkTutari , isnull(abs(SUM(lGirisMiktar1 * (nGirisCikis - 1))) , 0) lSevkIadeMiktari , 
@@ -139,7 +154,7 @@ tbStokFisiDetayi.sKasiyerRumuzu, tbStokFisiDetayi.nGirisCikis, tbStokFisiDetayi.
 WHERE nStokID = tbStok.nStokID) AS sBarkod,(SELECT sRenkAdi FROM tbRenk WHERE sRenk = tbStok.sRenk) AS sRenkAdi FROM tbFirma INNER JOIN tbStokFisiMaster 
 INNER JOIN tbStokFisiDetayi ON tbStokFisiMaster.nStokFisiID = tbStokFisiDetayi.nStokFisiID ON tbFirma.nFirmaID = tbStokFisiDetayi.nFirmaID LEFT OUTER JOIN tbStok ON tbStokFisiDetayi.nStokID = tbStok.nStokID 
 WHERE (tbStokFisiDetayi.sFisTipi <> 'PF')
-AND (tbStokFisiDetayi.dteFisTarihi BETWEEN '{startDate}' AND '{endDate}'   {magazaFilter3})
+AND (tbStokFisiDetayi.dteFisTarihi BETWEEN '{startDate}' AND '{endDate}' {magazaFilter3} {saticiFilter2})
 ) Satislar  
 GROUP BY nStokID , sKodu , sStokAciklama , sBarkod , sRenk,sBeden,sRenkAdi,sSaticiRumuzu ,satici HAVING (SUM(Miktar) <> 0)) NetSatisKalan  Order by sKodu";
 
@@ -267,7 +282,7 @@ GROUP BY sKat,sSaticiRumuzu, Satici ORDER BY SUM(lNetTutar),sSaticiRumuzu, Satic
             }
         }
         [HttpGet("DeliveryReport")]
-        public async Task<IActionResult> DeliveryReport(string startDate, string endDate,  string sSaticiRumuzu, string sDepo, string type, string customerName = "", string customerCode = "")
+        public async Task<IActionResult> DeliveryReport(string startDate, string endDate, string personelKodu, string sSaticiRumuzu, string sDepo, string type, string customerName = "", string customerCode = "")
         {
             try
             {
@@ -275,16 +290,21 @@ GROUP BY sKat,sSaticiRumuzu, Satici ORDER BY SUM(lNetTutar),sSaticiRumuzu, Satic
                 {
                     string whereCondition = (type == "2") ? "WHERE Q.lMevcut <= 0" : (type == "3") ? "WHERE Q.lMevcut > 0" : ""; 
                     
-                    // Satıcı ve Depo filtresi - sadece boş değilse ekle
-                    string saticiDepoFilter = "";
-                    if (!string.IsNullOrEmpty(sSaticiRumuzu))
+                    // Satıcı filtresi: PERSONELKODU 'AD' ile başlıyorsa tümü, değilse sadece kullanıcının satıcısı
+                    string saticiFilter = "";
+                    if (!string.IsNullOrEmpty(personelKodu) && personelKodu.StartsWith("AD", StringComparison.OrdinalIgnoreCase))
                     {
-                        saticiDepoFilter += $" AND tbSiparis.sSaticiRumuzu='{sSaticiRumuzu}'";
+                        // Admin - tüm satıcılar
+                        saticiFilter = " AND tbSiparis.sSaticiRumuzu LIKE '%'";
                     }
-                    if (!string.IsNullOrEmpty(sDepo))
+                    else if (!string.IsNullOrEmpty(sSaticiRumuzu))
                     {
-                        saticiDepoFilter += $" AND tbSiparis.sDepo='{sDepo}'";
+                        // Normal kullanıcı - sadece kendi satıcısı
+                        saticiFilter = $" AND tbSiparis.sSaticiRumuzu LIKE '{sSaticiRumuzu}%'";
                     }
+                    
+                    // Depo filtresi - zorunlu
+                    string depoFilter = !string.IsNullOrEmpty(sDepo) ? $" AND tbSiparis.sDepo='{sDepo}'" : "";
                     
                     // Müşteri adı ve kodu filtresi için ek koşullar
                     string customerFilter = "";
@@ -390,7 +410,8 @@ WITH Q AS (
         AND (SUBSTRING(tbSiparis.sSiparisiAlan, 1, 30) BETWEEN '' AND 'zzzzzzzzzzzzzzzzzzzz')
         AND (SUBSTRING(tbSiparis.sSiparisiAlan, 31, 30) BETWEEN '' AND 'zzzzzzzzzzzzzzzzzzzz')
         AND (tbSiparis.nSiparisTipi = 1)
-        {saticiDepoFilter}
+        {saticiFilter}
+        {depoFilter}
         {customerFilter}
     GROUP BY
         tbFirma.nFirmaID, tbFirma.sKodu, tbFirma.sAciklama,
