@@ -105,11 +105,16 @@ WHERE tbStokFisiDetayi.nStokFisiID = '{nAlisVerisID}' and (tbStokFisiDetayi.sFis
             {
                 using (var connection = new SqlConnection(_connectionString))
                 {
+                    // Magaza filtresi - sadece boş değilse ekle
+                    string magazaFilter1 = string.IsNullOrEmpty(magaza) ? "" : $"And sDepo IN ('{magaza}')";
+                    string magazaFilter2 = string.IsNullOrEmpty(magaza) ? "" : $"AND tbAlisVeris.sMagaza IN ('{magaza}')";
+                    string magazaFilter3 = string.IsNullOrEmpty(magaza) ? "" : $"AND tbStokFisiDetayi.sDepo IN ('{magaza}')";
+                    
                     string query = $@"set dateformat dmy SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED SELECT top 100 *, Mevcut - ISNULL(Bekleyen, 0) AS NetMevcut FROM (SELECT nStokID , sKodu , sStokAciklama , sBarkod ,sBeden,sRenkAdi, sRenk ,
 SUM(Miktar) AS miktar , sSaticiRumuzu,satici,(SELECT TOP 1 tbStokFisiDetayi.dteFisTarihi FROM tbStokFisiDetayi INNER JOIN tbFisTipi ON tbStokFisiDetayi.sFisTipi = tbFisTipi.sFisTipi WHERE (tbStokFisiDetayi.sFisTipi <> 'T')
 AND (tbStokFisiDetayi.sFisTipi = 'FA') AND (tbFisTipi.bSatismi = 0) AND tbStokFisiDetayi.nGirisCikis = 1 AND tbStokFisiDetayi.nStokID = Satislar.nStokID ORDER BY tbStokFisiDetayi.dteFisTarihi DESC) AS SonAlisTarihi ,
 (SELECT TOP 1 ISNULL(tbStokFisiDetayi.lGirisMiktar1 , 0) AS lGirisMiktar1 FROM tbStokFisiDetayi INNER JOIN tbFisTipi ON tbStokFisiDetayi.sFisTipi = tbFisTipi.sFisTipi WHERE (tbStokFisiDetayi.sFisTipi <> 'T') 
-AND (tbStokFisiDetayi.sFisTipi = 'FA') AND (tbFisTipi.bSatismi = 0) AND tbStokFisiDetayi.nGirisCikis = 1 AND tbStokFisiDetayi.nStokID = Satislar.nStokID ORDER BY tbStokFisiDetayi.dteFisTarihi DESC) AS SonAlisMiktari , (SELECT isnull(SUM(tbStokFisiDetayi.lGirisMiktar1 - tbStokFisiDetayi.lCikisMiktar1) , 0) FROM tbStokFisiDetayi WHERE Satislar.nStokID = tbStokFisiDetayi.nStokID  And sDepo IN ('{magaza}' )  ) AS mevcut ,
+AND (tbStokFisiDetayi.sFisTipi = 'FA') AND (tbFisTipi.bSatismi = 0) AND tbStokFisiDetayi.nGirisCikis = 1 AND tbStokFisiDetayi.nStokID = Satislar.nStokID ORDER BY tbStokFisiDetayi.dteFisTarihi DESC) AS SonAlisMiktari , (SELECT isnull(SUM(tbStokFisiDetayi.lGirisMiktar1 - tbStokFisiDetayi.lCikisMiktar1) , 0) FROM tbStokFisiDetayi WHERE Satislar.nStokID = tbStokFisiDetayi.nStokID  {magazaFilter1}  ) AS mevcut ,
 (SELECT isnull(SUM(tbStokFisiDetayi.lGirisMiktar1 - tbStokFisiDetayi.lCikisMiktar1) , 0) FROM tbStokFisiDetayi WHERE Satislar.nStokID = tbStokFisiDetayi.nStokID ) AS envanter,(SELECT SUM(lKalanMiktar) AS Siparis 
 FROM (SELECT tbStok.nStokID , tbStok.sKodu , tbSiparis.lMiktari - SUM(ISNULL(tbStokFisiDetayi.lSevkMiktari , 0)) + SUM(ISNULL(tbStokFisiDetayi.lSevkIadeMiktari , 0)) AS lKalanMiktar FROM (SELECT nSiparisID , 
 isnull(abs(SUM(lGirisMiktar1 * (nGirisCikis - 2))) , 0) lSevkMiktari , isnull(abs(SUM(lGirisTutar * (nGirisCikis - 2))) , 0) lSevkTutari , isnull(abs(SUM(lGirisMiktar1 * (nGirisCikis - 1))) , 0) lSevkIadeMiktari , 
@@ -125,7 +130,7 @@ AND (tbAlisVeris.sFisTipi = 'SP' OR tbAlisVeris.sFisTipi = 'SK')
 AND (tbAlisverisSiparis.dteTeslimEdilecek BETWEEN '{startDate}' AND '{endDate}') 
 AND (stok.nStokID = Satislar.nStokID) 
 AND (tbAlisVeris.dteFaturaTarihi BETWEEN '{startDate}' AND '{endDate}')  
-AND tbAlisVeris.sMagaza IN ( '{magaza}' ) GROUP BY stok.sKodu) AS Bekleyen
+{magazaFilter2} GROUP BY stok.sKodu) AS Bekleyen
 FROM (SELECT CAST(tbStokFisiDetayi.nStokFisiID AS NVARCHAR(20)) AS nAlisVerisID, tbStokFisiDetayi.nMusteriID, tbFirma.sAciklama AS sMusteriAdi, tbStokFisiDetayi.dteFisTarihi AS dteTarih, tbStokFisiMaster.dteKayitTarihi,
 tbStokFisiMaster.sFisTipi AS fisTipi, tbStokFisiMaster.lFisNo AS lNo, tbStok.nStokID, tbStok.sKodu AS sKodu, tbStok.sAciklama AS sStokAciklama, ISNULL(tbStokFisiDetayi.lCikisMiktar1, 0) AS Miktar, 
 ISNULL(tbStokFisiDetayi.lCikisMiktar1, 0) * (SELECT isnull(lfiyat , 0) FROM tbstokfiyati WHERE nStokId = tbstok.NstokId AND sFiyatTipi = 'M') AS MALIYET, ISNULL(tbStokFisiDetayi.lBrutFiyat, 0) AS Fiyat, 
@@ -134,7 +139,7 @@ tbStokFisiDetayi.sKasiyerRumuzu, tbStokFisiDetayi.nGirisCikis, tbStokFisiDetayi.
 WHERE nStokID = tbStok.nStokID) AS sBarkod,(SELECT sRenkAdi FROM tbRenk WHERE sRenk = tbStok.sRenk) AS sRenkAdi FROM tbFirma INNER JOIN tbStokFisiMaster 
 INNER JOIN tbStokFisiDetayi ON tbStokFisiMaster.nStokFisiID = tbStokFisiDetayi.nStokFisiID ON tbFirma.nFirmaID = tbStokFisiDetayi.nFirmaID LEFT OUTER JOIN tbStok ON tbStokFisiDetayi.nStokID = tbStok.nStokID 
 WHERE (tbStokFisiDetayi.sFisTipi <> 'PF')
-AND (tbStokFisiDetayi.dteFisTarihi BETWEEN '{startDate}' AND '{endDate}'   AND tbStokFisiDetayi.sDepo IN ( '{magaza}' ))
+AND (tbStokFisiDetayi.dteFisTarihi BETWEEN '{startDate}' AND '{endDate}'   {magazaFilter3})
 ) Satislar  
 GROUP BY nStokID , sKodu , sStokAciklama , sBarkod , sRenk,sBeden,sRenkAdi,sSaticiRumuzu ,satici HAVING (SUM(Miktar) <> 0)) NetSatisKalan  Order by sKodu";
 
