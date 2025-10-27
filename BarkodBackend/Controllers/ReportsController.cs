@@ -270,6 +270,17 @@ GROUP BY sKat,sSaticiRumuzu, Satici ORDER BY SUM(lNetTutar),sSaticiRumuzu, Satic
                 {
                     string whereCondition = (type == "2") ? "WHERE Q.lMevcut <= 0" : (type == "3") ? "WHERE Q.lMevcut > 0" : ""; 
                     
+                    // Satıcı ve Depo filtresi - sadece boş değilse ekle
+                    string saticiDepoFilter = "";
+                    if (!string.IsNullOrEmpty(sSaticiRumuzu))
+                    {
+                        saticiDepoFilter += $" AND tbSiparis.sSaticiRumuzu='{sSaticiRumuzu}'";
+                    }
+                    if (!string.IsNullOrEmpty(sDepo))
+                    {
+                        saticiDepoFilter += $" AND tbSiparis.sDepo='{sDepo}'";
+                    }
+                    
                     // Müşteri adı ve kodu filtresi için ek koşullar
                     string customerFilter = "";
                     if (!string.IsNullOrEmpty(customerName))
@@ -374,9 +385,8 @@ WITH Q AS (
         AND (SUBSTRING(tbSiparis.sSiparisiAlan, 1, 30) BETWEEN '' AND 'zzzzzzzzzzzzzzzzzzzz')
         AND (SUBSTRING(tbSiparis.sSiparisiAlan, 31, 30) BETWEEN '' AND 'zzzzzzzzzzzzzzzzzzzz')
         AND (tbSiparis.nSiparisTipi = 1)
-		AND tbSiparis.sSaticiRumuzu='{sSaticiRumuzu}'
-		AND tbSiparis.sDepo='{sDepo}'
-		{customerFilter}
+        {saticiDepoFilter}
+        {customerFilter}
     GROUP BY
         tbFirma.nFirmaID, tbFirma.sKodu, tbFirma.sAciklama,
         tbSiparis.lSiparisNo, tbSiparis.dteSiparisTarihi, tbSiparis.sSiparisiAlan, tbSiparis.sSiparisiVeren,
