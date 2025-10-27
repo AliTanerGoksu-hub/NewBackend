@@ -39,6 +39,15 @@ namespace BarkodBackend.Controllers
                       AND PERSONELKODU = @user AND SIFRE = @password";
 
                     var auth = await connection.QueryFirstOrDefaultAsync<Auth>(query, new { user, password });
+                    
+                    // Debug için
+                    Console.WriteLine($"[Login] Auth null mu: {auth == null}");
+                    if (auth != null)
+                    {
+                        Console.WriteLine($"[Login] sDepo değeri: '{auth.sDepo}'");
+                        Console.WriteLine($"[Login] sSaticiRumuzu değeri: '{auth.sSaticiRumuzu}'");
+                    }
+                    
                     if (auth != null)
                     {
                         var claims = new[] {
