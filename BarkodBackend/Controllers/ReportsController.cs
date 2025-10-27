@@ -286,6 +286,9 @@ GROUP BY sKat,sSaticiRumuzu, Satici ORDER BY SUM(lNetTutar),sSaticiRumuzu, Satic
         {
             try
             {
+                // Debug: parametreleri loglayalım
+                Console.WriteLine($"[DeliveryReport API] personelKodu: '{personelKodu}', sSaticiRumuzu: '{sSaticiRumuzu}', sDepo: '{sDepo}'");
+                
                 using (var connection = new SqlConnection(_connectionString))
                 {
                     string whereCondition = (type == "2") ? "WHERE Q.lMevcut <= 0" : (type == "3") ? "WHERE Q.lMevcut > 0" : ""; 
@@ -296,15 +299,22 @@ GROUP BY sKat,sSaticiRumuzu, Satici ORDER BY SUM(lNetTutar),sSaticiRumuzu, Satic
                     {
                         // Admin - tüm satıcılar
                         saticiFilter = " AND tbSiparis.sSaticiRumuzu LIKE '%'";
+                        Console.WriteLine("[DeliveryReport] Admin kullanıcı - tüm satıcılar");
                     }
                     else if (!string.IsNullOrEmpty(sSaticiRumuzu))
                     {
                         // Normal kullanıcı - sadece kendi satıcısı
                         saticiFilter = $" AND tbSiparis.sSaticiRumuzu LIKE '{sSaticiRumuzu}%'";
+                        Console.WriteLine($"[DeliveryReport] Normal kullanıcı - satıcı filtresi: {saticiFilter}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("[DeliveryReport] UYARI: sSaticiRumuzu boş ve admin değil!");
                     }
                     
                     // Depo filtresi - zorunlu
                     string depoFilter = !string.IsNullOrEmpty(sDepo) ? $" AND tbSiparis.sDepo='{sDepo}'" : "";
+                    Console.WriteLine($"[DeliveryReport] Depo filtresi: '{depoFilter}'");
                     
                     // Müşteri adı ve kodu filtresi için ek koşullar
                     string customerFilter = "";
