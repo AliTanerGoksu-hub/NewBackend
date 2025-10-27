@@ -103,6 +103,8 @@ WHERE tbStokFisiDetayi.nStokFisiID = '{nAlisVerisID}' and (tbStokFisiDetayi.sFis
         {
             try
             {
+                Console.WriteLine($"[SalesRemaining API] personelKodu: '{personelKodu}', sSaticiRumuzu: '{sSaticiRumuzu}', magaza: '{magaza}'");
+                
                 using (var connection = new SqlConnection(_connectionString))
                 {
                     // Satıcı filtresi: PERSONELKODU 'AD' ile başlıyorsa tümü, değilse sadece kullanıcının satıcısı
@@ -110,21 +112,31 @@ WHERE tbStokFisiDetayi.nStokFisiID = '{nAlisVerisID}' and (tbStokFisiDetayi.sFis
                     string saticiFilter2 = "";
                     if (!string.IsNullOrEmpty(personelKodu) && personelKodu.StartsWith("AD", StringComparison.OrdinalIgnoreCase))
                     {
-                        // Admin - tüm satıcılar (filtre ekleme)
+                        // Admin - tüm satıcılar (filtre ekleme gerek yok, zaten hepsi gelir)
                         saticiFilter1 = "";
                         saticiFilter2 = "";
+                        Console.WriteLine("[SalesRemaining] Admin kullanıcı - tüm satıcılar");
                     }
                     else if (!string.IsNullOrEmpty(sSaticiRumuzu))
                     {
                         // Normal kullanıcı - sadece kendi satıcısı
                         saticiFilter1 = $" AND sSaticiRumuzu LIKE '{sSaticiRumuzu}%'";
                         saticiFilter2 = $" AND tbStokFisiDetayi.sSaticiRumuzu LIKE '{sSaticiRumuzu}%'";
+                        Console.WriteLine($"[SalesRemaining] Normal kullanıcı - satıcı filtresi uygulandı");
+                    }
+                    else
+                    {
+                        // sSaticiRumuzu boş - varsayılan olarak tüm satıcılar (filtre eklemeye gerek yok)
+                        saticiFilter1 = "";
+                        saticiFilter2 = "";
+                        Console.WriteLine("[SalesRemaining] sSaticiRumuzu boş - tüm satıcılar");
                     }
                     
                     // Depo filtresi - zorunlu
                     string magazaFilter1 = !string.IsNullOrEmpty(magaza) ? $" AND sDepo = '{magaza}'" : "";
                     string magazaFilter2 = !string.IsNullOrEmpty(magaza) ? $" AND tbAlisVeris.sMagaza = '{magaza}'" : "";
                     string magazaFilter3 = !string.IsNullOrEmpty(magaza) ? $" AND tbStokFisiDetayi.sDepo = '{magaza}'" : "";
+                    Console.WriteLine($"[SalesRemaining] Depo filtreleri uygulandı");
                     string query = $@"set dateformat dmy SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED SELECT top 100 *, Mevcut - ISNULL(Bekleyen, 0) AS NetMevcut FROM (SELECT nStokID , sKodu , sStokAciklama , sBarkod ,sBeden,sRenkAdi, sRenk ,
 SUM(Miktar) AS miktar , sSaticiRumuzu,satici,(SELECT TOP 1 tbStokFisiDetayi.dteFisTarihi FROM tbStokFisiDetayi INNER JOIN tbFisTipi ON tbStokFisiDetayi.sFisTipi = tbFisTipi.sFisTipi WHERE (tbStokFisiDetayi.sFisTipi <> 'T')
 AND (tbStokFisiDetayi.sFisTipi = 'FA') AND (tbFisTipi.bSatismi = 0) AND tbStokFisiDetayi.nGirisCikis = 1 AND tbStokFisiDetayi.nStokID = Satislar.nStokID ORDER BY tbStokFisiDetayi.dteFisTarihi DESC) AS SonAlisTarihi ,
@@ -309,7 +321,9 @@ GROUP BY sKat,sSaticiRumuzu, Satici ORDER BY SUM(lNetTutar),sSaticiRumuzu, Satic
                     }
                     else
                     {
-                        Console.WriteLine("[DeliveryReport] UYARI: sSaticiRumuzu boş ve admin değil!");
+                        // sSaticiRumuzu boş - varsayılan olarak tüm satıcılar
+                        saticiFilter = " AND tbSiparis.sSaticiRumuzu LIKE '%'";
+                        Console.WriteLine("[DeliveryReport] sSaticiRumuzu boş - tüm satıcılar");
                     }
                     
                     // Depo filtresi - zorunlu
